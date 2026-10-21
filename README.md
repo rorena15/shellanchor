@@ -19,7 +19,7 @@ Browser (xterm.js) ──WSS── server.py ──SSH── [jump host ──] 
 ## Install
 
 ```bat
-git clone https://github.com/<owner>/shellanchor.git
+git clone https://github.com/rorena15/shellanchor.git
 cd shellanchor
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
