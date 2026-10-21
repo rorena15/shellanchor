@@ -17,7 +17,7 @@ const shellName = (id) => CAPS.shells.find((x) => x.id === id)?.name || id;
 // ── 세션 열기 ────────────────────────────────────────────
 function openSpec(spec) {
   if (spec.type === 'rdp') return launchRdp(spec);
-  if (spec.type === 'local' && !CAPS.local) return toast('로컬 터미널은 서버가 127.0.0.1로 실행 중일 때만 쓸 수 있습니다', 3000);
+  if (spec.type === 'local' && !CAPS.local) return toast(L('로컬 터미널은 서버가 127.0.0.1로 실행 중일 때만 쓸 수 있습니다'), 3000);
   if (!spec.quick) {
     const recent = store.get('recent', []).filter((x) => x !== spec.id);
     recent.unshift(spec.id);
@@ -32,15 +32,15 @@ async function launchRdp(spec) {
     let secrets = {};
     if (spec.gateway) {
       const gw = findSession(spec.gateway);
-      if (!gw) return toast('게이트웨이 SSH 세션을 찾을 수 없습니다', 3000);
+      if (!gw) return toast(L('게이트웨이 SSH 세션을 찾을 수 없습니다'), 3000);
       let ask = {};
       for (;;) {
         secrets = await ensureSecrets(gw, ask);
         if (!secrets) return;
         try {
-          toast('SSH 게이트웨이 연결 중…');
+          toast(L('SSH 게이트웨이 연결 중…'));
           const r = await api.call('rdp', { sid: spec.id, secrets });
-          return toast(`원격 데스크톱 실행 → ${r.address}`, 2500);
+          return toast(L('원격 데스크톱 실행 → {addr}', { addr: r.address }), 2500);
         } catch (e) {
           const [kind, which] = (e.code || '').split(':');
           if (kind === 'auth') { forgetSecret(which === 'jump' ? gw.jump : gw, 'password'); ask = { password: which }; toast(e.message, 2500); continue; }
@@ -50,9 +50,9 @@ async function launchRdp(spec) {
       }
     }
     const r = await api.call('rdp', { sid: spec.id, secrets });
-    toast(`원격 데스크톱 실행 → ${r.address}`, 2500);
+    toast(L('원격 데스크톱 실행 → {addr}', { addr: r.address }), 2500);
   } catch (e) {
-    toast('RDP 실행 실패: ' + e.message, 4000);
+    toast(L('RDP 실행 실패: {msg}', { msg: e.message }), 4000);
   }
 }
 
@@ -63,7 +63,7 @@ function openTab(spec) {
   };
   s.tab = document.createElement('div');
   s.tab.className = 'tab';
-  s.tab.innerHTML = `<span class="dot"></span><span class="label"></span><button class="x" title="닫기">✕</button>`;
+  s.tab.innerHTML = `<span class="dot"></span><span class="label"></span><button class="x" title="${L('닫기')}">✕</button>`;
   s.tab.querySelector('.label').textContent = tabLabel(s);
   $('#tabs').appendChild(s.tab);
 
@@ -71,7 +71,7 @@ function openTab(spec) {
   s.pane.className = 'pane';
   s.pane.innerHTML = `<div class="pane-title"></div><div class="term"></div>
     <div class="banner" hidden><span class="msg"></span><span class="grow"></span>
-      <button class="re primary">재접속 (R)</button><button class="cancel" hidden>취소</button><button class="cl">탭 닫기 (Enter)</button></div>`;
+      <button class="re primary">${L('재접속 (R)')}</button><button class="cancel" hidden>${L('취소')}</button><button class="cl">${L('탭 닫기 (Enter)')}</button></div>`;
   s.pane.querySelector('.pane-title').textContent = tabLabel(s);
   $('#workspace').appendChild(s.pane);
 
@@ -90,18 +90,18 @@ function openTab(spec) {
   // 복사·붙여넣기
   term.onSelectionChange(() => {
     const sel = term.getSelection();
-    if (sel) navigator.clipboard?.writeText(sel).then(() => toast('복사됨', 800), () => {});
+    if (sel) navigator.clipboard?.writeText(sel).then(() => toast(L('복사됨'), 800), () => {});
   });
   s.pane.querySelector('.term').addEventListener('contextmenu', async (e) => {
     e.preventDefault();
     try { const txt = await navigator.clipboard.readText(); if (txt) term.paste(txt); }
-    catch { toast('클립보드 읽기 권한이 필요합니다'); }
+    catch { toast(L('클립보드 읽기 권한이 필요합니다')); }
   });
   term.attachCustomKeyEventHandler((e) => {
     if (e.type !== 'keydown') return true;
     if (e.ctrlKey && e.shiftKey && e.code === 'KeyC') {
       const sel = term.getSelection();
-      if (sel) navigator.clipboard?.writeText(sel).then(() => toast('복사됨', 800));
+      if (sel) navigator.clipboard?.writeText(sel).then(() => toast(L('복사됨'), 800));
       return false;
     }
     if (e.ctrlKey && e.shiftKey && e.code === 'KeyV') {
@@ -133,7 +133,7 @@ function openTab(spec) {
   s.tab.oncontextmenu = (e) => { e.preventDefault(); tabMenu(s, e.clientX, e.clientY); };
   s.tab.querySelector('.x').onclick = (e) => { e.stopPropagation(); closeTab(s); };
   s.pane.querySelector('.re').onclick = () => reconnectNow(s);
-  s.pane.querySelector('.cancel').onclick = () => { clearTimeout(s.retryTimer); s.retryTimer = null; setState(s, 'closed', '자동 재접속 취소됨'); };
+  s.pane.querySelector('.cancel').onclick = () => { clearTimeout(s.retryTimer); s.retryTimer = null; setState(s, 'closed', L('자동 재접속 취소됨')); };
   s.pane.querySelector('.cl').onclick = () => closeTab(s);
 
   show(s);
@@ -171,7 +171,7 @@ async function connect(s) {
   } else {
     const secrets = await ensureSecrets(p, s.ask);
     s.ask = {};
-    if (!secrets) { setState(s, 'closed', '접속 취소됨'); return; }
+    if (!secrets) { setState(s, 'closed', L('접속 취소됨')); return; }
     const hop = (c, pw, pp) => ({ host: c.host, port: c.port || 22, username: c.username, auth: c.auth || 'password',
                                    keyPath: c.keyPath || '', password: pw, passphrase: pp });
     first = {
@@ -179,7 +179,7 @@ async function connect(s) {
       jump: p.jump?.host ? hop(p.jump, secrets.jumpPassword, secrets.jumpPassphrase) : null,
       log: { on: !!p.log, name: p.name || p.host }, monitor: SETTINGS.monitor && focused() === s,
     };
-    s.term.write(`\r\n\x1b[90m${targetStr(p)}${p.jump?.host ? ' (via ' + targetStr(p.jump) + ')' : ''} 접속 중...\x1b[0m\r\n`);
+    s.term.write(`\r\n\x1b[90m${targetStr(p)}${p.jump?.host ? ' (via ' + targetStr(p.jump) + ')' : ''} ${L('접속 중...')}\x1b[0m\r\n`);
   }
 
   const ws = new WebSocket(wsUrl(s.kind === 'local' ? '/local' : '/ws'));
@@ -205,7 +205,7 @@ async function connect(s) {
       s.sid = m.sid;
       s.retryN = 0;
       s.logPath = m.log;
-      s.tab.title = m.log ? `로그: ${m.log}` : '';
+      s.tab.title = m.log ? L('로그: {path}', { path: m.log }) : '';
       setState(s, 'on');
       if (s.kind === 'ssh') onSshConnected(s);
       if (focused() === s) s.term.focus();
@@ -220,18 +220,18 @@ async function connect(s) {
       if (kind === 'auth' && (hop.auth || 'password') === 'password') {
         forgetSecret(hop, 'password');
         s.ask = { password: which };
-        setState(s, 'closed', '인증 실패');
+        setState(s, 'closed', L('인증 실패'));
         setTimeout(() => connect(s), 50);           // 비밀번호 다시 묻기
       } else if (kind === 'passphrase') {
         s.ask = { passphrase: which };
-        setState(s, 'closed', '키 암호 필요');
+        setState(s, 'closed', L('키 암호 필요'));
         setTimeout(() => connect(s), 50);
       } else {
-        setState(s, 'closed', '접속 실패');
+        setState(s, 'closed', L('접속 실패'));
       }
     } else if (m.type === 'closed') {
       s.closedExit = m.exit;
-      s.term.write(`\r\n\x1b[90m[연결 종료${m.exit != null ? ` · exit ${m.exit}` : ''}]\x1b[0m\r\n`);
+      s.term.write(`\r\n\x1b[90m[${L('연결 종료')}${m.exit != null ? ` · exit ${m.exit}` : ''}]\x1b[0m\r\n`);
     } else if (m.type === 'monitor') {
       s.mon = m;
       if (focused() === s) renderStatus();
@@ -243,13 +243,13 @@ async function connect(s) {
     if (s.ws !== ws) return;
     const wasOn = s.state === 'on';
     if (!errorShown && !wasOn) {
-      s.term.write(`\r\n\x1b[31m중계 서버에 연결할 수 없습니다 (${ev.code}${ev.reason ? ' ' + ev.reason : ''})\x1b[0m\r\n`);
+      s.term.write(`\r\n\x1b[31m${L('중계 서버에 연결할 수 없습니다')} (${ev.code}${ev.reason ? ' ' + ev.reason : ''})\x1b[0m\r\n`);
     }
     if (errorShown) return;
     // 사용자가 exit로 끝낸 경우(종료 코드 있음)는 재접속하지 않음 — 네트워크 끊김만 자동 재접속
     const dropped = wasOn && s.closedExit == null;
     if (dropped && s.kind === 'ssh' && s.spec.reconnect !== false && !api.stopped) scheduleReconnect(s);
-    else setState(s, 'closed', s.closedExit != null ? `세션 종료 (exit ${s.closedExit})` : '연결이 끊어졌습니다');
+    else setState(s, 'closed', s.closedExit != null ? L('세션 종료 (exit {code})', { code: s.closedExit }) : L('연결이 끊어졌습니다'));
   };
 }
 
@@ -259,7 +259,7 @@ function scheduleReconnect(s) {
   let left = wait;
   const tick = () => {
     if (left <= 0) { connect(s); return; }
-    setState(s, 'waiting', `연결 끊김 — ${left}초 후 자동 재접속 (${s.retryN}번째)`);
+    setState(s, 'waiting', L('연결 끊김 — {sec}초 후 자동 재접속 ({n}번째)', { sec: left, n: s.retryN }));
     left--;
     s.retryTimer = setTimeout(tick, 1000);
   };
@@ -281,7 +281,7 @@ function onSshConnected(s) {
 }
 
 function closeTab(s, force) {
-  if (!force && s.state === 'on' && !confirm(`${tabLabel(s)} 연결을 끊을까요?`)) return;
+  if (!force && s.state === 'on' && !confirm(L('{name} 연결을 끊을까요?', { name: tabLabel(s) }))) return;
   clearTimeout(s.retryTimer);
   s.sftp?.destroy();
   if (s.ws) { s.ws.onclose = null; s.ws.close(); }
@@ -351,7 +351,7 @@ function renderLayout() {
       const e = document.createElement('div');
       e.className = 'cell-empty' + (i === focusIdx ? ' focused' : '');
       e.style.gridArea = 'c' + i;
-      e.textContent = '탭을 클릭하거나 세션을 더블클릭하면 여기에 열립니다';
+      e.textContent = L('탭을 클릭하거나 세션을 더블클릭하면 여기에 열립니다');
       e.onclick = () => setFocus(i);
       wsEl.appendChild(e);
     });
@@ -375,21 +375,21 @@ function renderStatus() {
   const el = $('#sbText');
   const s = focused();
   if (!api.ws || api.ws.readyState !== WebSocket.OPEN) return;
-  if (!s) { el.textContent = tabs.length ? '빈 칸' : '준비'; return; }
-  if (s.kind === 'local') { el.textContent = `▣ 로컬 · ${shellName(s.spec.shell)}`; return; }
-  const who = `● ${targetStr(s.spec)}${s.spec.encoding === 'euc-kr' ? ' · EUC-KR' : ''}${s.spec.log ? ' · 로그 기록 중' : ''}`;
+  if (!s) { el.textContent = tabs.length ? L('빈 칸') : L('준비'); return; }
+  if (s.kind === 'local') { el.textContent = `▣ ${L('로컬')} · ${shellName(s.spec.shell)}`; return; }
+  const who = `● ${targetStr(s.spec)}${s.spec.encoding === 'euc-kr' ? ' · EUC-KR' : ''}${s.spec.log ? ' · ' + L('로그 기록 중') : ''}`;
   const m = s.mon;
-  if (s.state !== 'on') { el.textContent = `${targetStr(s.spec)} · ${s.state === 'connecting' ? '접속 중…' : '끊김'}`; return; }
+  if (s.state !== 'on') { el.textContent = `${targetStr(s.spec)} · ${s.state === 'connecting' ? L('접속 중…') : L('끊김')}`; return; }
   if (!SETTINGS.monitor) { el.textContent = who; return; }
-  if (!m) { el.textContent = who + ' · 모니터링 준비 중…'; return; }
-  if (m.unsupported) { el.textContent = who + ' · 모니터링: 지원 안 함 (Linux 아님)'; return; }
+  if (!m) { el.textContent = who + ' · ' + L('모니터링 준비 중…'); return; }
+  if (m.unsupported) { el.textContent = who + ' · ' + L('모니터링: 지원 안 함 (Linux 아님)'); return; }
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const bar = (p) => `<span class="meter${p >= 90 ? ' hot' : p >= 75 ? ' warm' : ''}"><i style="width:${p}%"></i></span>`;
   const parts = [`<b>${escapeHtml(who)}</b>`];
   if (m.cpu != null) parts.push(`CPU ${bar(m.cpu)} ${Math.round(m.cpu)}%`);
   const mp = pct(m.mem[0], m.mem[1]);
   parts.push(`RAM ${bar(mp)} ${fmtSize(m.mem[0] * 1024)} / ${fmtSize(m.mem[1] * 1024)}`);
-  if (m.disk) { const dp = pct(m.disk[0], m.disk[1]); parts.push(`디스크 / ${bar(dp)} ${dp}%`); }
+  if (m.disk) { const dp = pct(m.disk[0], m.disk[1]); parts.push(`${L('디스크')} / ${bar(dp)} ${dp}%`); }
   if (m.net) parts.push(`↓ ${fmtSize(m.net[0])}/s ↑ ${fmtSize(m.net[1])}/s`);
   parts.push(`Load ${m.load.join(' ')}`, `Up ${fmtUptime(m.uptime)}`);
   el.innerHTML = parts.join('<span class="sep">│</span>');
@@ -399,14 +399,14 @@ function escapeHtml(s) { return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<'
 // ── 탭 메뉴 ───────────────────────────────────────────
 function tabMenu(s, x, y) {
   showMenu(x, y, [
-    { label: '탭 복제', action: () => openTab(s.spec) },
-    { label: '재접속', action: () => reconnectNow(s) },
-    s.spec.quick ? { label: '세션으로 저장…', action: () => saveQuickAsSession(s) } : null,
-    !s.spec.quick && findSession(s.spec.id) ? { label: '세션 편집…', action: () => editSession(findSession(s.spec.id)) } : null,
-    s.logPath ? { label: '로그 폴더 열기', action: () => api.call('openLogs', { name: s.spec.name || s.spec.host }).catch((e) => toast(e.message)) } : null,
+    { label: L('탭 복제'), action: () => openTab(s.spec) },
+    { label: L('재접속'), action: () => reconnectNow(s) },
+    s.spec.quick ? { label: L('세션으로 저장…'), action: () => saveQuickAsSession(s) } : null,
+    !s.spec.quick && findSession(s.spec.id) ? { label: L('세션 편집…'), action: () => editSession(findSession(s.spec.id)) } : null,
+    s.logPath ? { label: L('로그 폴더 열기'), action: () => api.call('openLogs', { name: s.spec.name || s.spec.host }).catch((e) => toast(e.message)) } : null,
     '-',
-    { label: '닫기', action: () => closeTab(s) },
-    { label: '다른 탭 모두 닫기', action: () => tabs.filter((t) => t !== s).forEach((t) => closeTab(t, true)) },
+    { label: L('닫기'), action: () => closeTab(s) },
+    { label: L('다른 탭 모두 닫기'), action: () => tabs.filter((t) => t !== s).forEach((t) => closeTab(t, true)) },
   ]);
 }
 
@@ -466,11 +466,11 @@ function updateToolbar() {
 $('#tbSplit').onclick = (e) => {
   const r = e.currentTarget.getBoundingClientRect();
   const it = (mode, label) => ({ label: (layout === mode ? '✓ ' : '　') + label, action: () => setLayout(mode) });
-  showMenu(r.left, r.bottom + 2, [it('1', '한 화면'), it('2v', '좌우 2분할'), it('2h', '상하 2분할'), it('4', '4분할')]);
+  showMenu(r.left, r.bottom + 2, [it('1', L('한 화면')), it('2v', L('좌우 2분할')), it('2h', L('상하 2분할')), it('4', L('4분할'))]);
 };
 
 function localMenu(x, y) {
-  if (!CAPS.shells.length) return toast('사용할 수 있는 로컬 셸이 없습니다');
+  if (!CAPS.shells.length) return toast(L('사용할 수 있는 로컬 셸이 없습니다'));
   showMenu(x, y, CAPS.shells.map((sh) => ({
     label: sh.name, action: () => openSpec({ id: 'local-' + sh.id, type: 'local', shell: sh.id, name: sh.name, quick: true }),
   })));
@@ -483,7 +483,7 @@ $('#tbTunnel').onclick = () => setSide('tunnels');
 $('#quick').addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   const t = parseTarget(e.target.value);
-  if (!t) return toast('형식: user@host 또는 user@host:port', 2500);
+  if (!t) return toast(L('형식: user@host 또는 user@host:port'), 2500);
   e.target.value = '';
   openSpec({ id: 'q-' + uid(), type: 'ssh', quick: true, name: '', ...t, auth: 'password', encoding: 'utf-8',
              log: !!SETTINGS.logDefault, reconnect: true, jump: null });
@@ -511,7 +511,7 @@ function setFont(n) {
   store.set('fontSize', fontSize);
   tabs.forEach((s) => { s.term.options.fontSize = fontSize; });
   cells.forEach((t) => t && safeFit(t));
-  toast(`글자 크기 ${fontSize}`);
+  toast(L('글자 크기 {n}', { n: fontSize }));
 }
 $('#fontUp').onclick = () => setFont(fontSize + 1);
 $('#fontDown').onclick = () => setFont(fontSize - 1);
@@ -520,7 +520,7 @@ $('#fullBtn').onclick = async () => {
   if (document.fullscreenElement) return document.exitFullscreen();
   await document.documentElement.requestFullscreen();
   try { await navigator.keyboard?.lock(); } catch {}
-  toast('전체화면 — 나가려면 Esc를 길게 누르세요', 2500);
+  toast(L('전체화면 — 나가려면 Esc를 길게 누르세요'), 2500);
 };
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement) navigator.keyboard?.unlock();

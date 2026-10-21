@@ -5,9 +5,11 @@
 import ipaddress
 import socket
 import struct
+import contextvars
 import threading
 import time
 
+from i18n import L
 from sshconn import describe, open_chain
 
 
@@ -67,12 +69,13 @@ class Tunnel:
             self.listener.bind(("127.0.0.1", int(self.cfg.get("listenPort") or 0)))
         except OSError as e:
             self._close_ssh()
-            raise RuntimeError(f"로컬 포트 {self.cfg.get('listenPort')}를 열 수 없습니다 (이미 사용 중?): {e.strerror}")
+            raise RuntimeError(L("로컬 포트 {port}를 열 수 없습니다 (이미 사용 중?): {err}", port=self.cfg.get('listenPort'), err=e.strerror))
         self.listener.listen(32)
         self.port = self.listener.getsockname()[1]
         self._set("on")
-        threading.Thread(target=self._accept_loop, daemon=True).start()
-        threading.Thread(target=self._watch, daemon=True).start()
+        # 터널을 시작한 화면의 언어로 상태 메시지를 내도록 언어(ContextVar)를 스레드에 복사
+        threading.Thread(target=contextvars.copy_context().run, args=(self._accept_loop,), daemon=True).start()
+        threading.Thread(target=contextvars.copy_context().run, args=(self._watch,), daemon=True).start()
 
     def _connect(self):
         p = dict(self.params)
@@ -98,7 +101,7 @@ class Tunnel:
                 continue
             if self.stopped:
                 return
-            self._set("reconnecting", "SSH 연결 끊김 — 재연결 중")
+            self._set("reconnecting", L("SSH 연결 끊김 — 재연결 중"))
             self._close_ssh()
             while not self.stopped:
                 try:
@@ -106,7 +109,7 @@ class Tunnel:
                     self._set("on")
                     break
                 except Exception as e:
-                    self._set("reconnecting", describe(e)[0] + " — 5초 후 재시도")
+                    self._set("reconnecting", describe(e)[0] + L(" — 5초 후 재시도"))
                     time.sleep(5)
 
     def _accept_loop(self):
@@ -120,7 +123,7 @@ class Tunnel:
     def _open(self, host, port, peer):
         t = self.client.get_transport() if self.client else None
         if not t or not t.is_active():
-            raise ConnectionError("SSH 연결 없음")
+            raise ConnectionError(L("SSH 연결 없음"))
         return t.open_channel("direct-tcpip", (host, int(port)), peer, timeout=10)
 
     def _handle(self, sock, peer):

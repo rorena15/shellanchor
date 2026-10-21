@@ -20,6 +20,7 @@ from websockets.exceptions import ConnectionClosed
 
 import common
 import localterm
+from i18n import L
 from sshconn import describe
 from tunnels import manager
 
@@ -46,7 +47,7 @@ def _find(data, kind, sid):
     for x in data.get(kind, []):
         if x.get("id") == sid:
             return x
-    raise ValueError("저장된 항목을 찾을 수 없습니다 (다른 창에서 삭제됨?)")
+    raise ValueError(L("저장된 항목을 찾을 수 없습니다 (다른 창에서 삭제됨?)"))
 
 
 def ssh_params(s, sec):
@@ -117,7 +118,7 @@ def _launch_rdp(s, data, sec, ask):
 def _pick_file():
     code = ("import tkinter as t, tkinter.filedialog as f, os; r=t.Tk(); r.withdraw(); "
             "r.attributes('-topmost', 1); "
-            "print(f.askopenfilename(title='개인키 파일 선택', initialdir=os.path.expanduser('~/.ssh') "
+            "print(f.askopenfilename(title=" + repr(L("개인키 파일 선택")) + ", initialdir=os.path.expanduser('~/.ssh') "
             "if os.path.isdir(os.path.expanduser('~/.ssh')) else os.path.expanduser('~')))")
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8",
                        creationflags=common.NO_WINDOW)
@@ -153,7 +154,7 @@ async def api_handler(ws):
             if op == "load":
                 r = {"data": common.load("sessions", EMPTY), "settings": common.settings(),
                      "tunnels": manager.status(), "logDir": str(common.log_dir()),
-                     "caps": {"local": common.LOCAL_MODE, "shells": localterm.available() if common.LOCAL_MODE else [],
+                     "caps": {"local": common.LOCAL_MODE, "shells": [{**sh, "name": L(sh["name"])} for sh in localterm.available()] if common.LOCAL_MODE else [],
                               "rdp": common.LOCAL_MODE and MSTSC.exists()}}
             elif op == "saveData":
                 common.save("sessions", m["data"])
@@ -173,7 +174,7 @@ async def api_handler(ws):
                 await asyncio.to_thread(manager.stop, m["tid"])
                 r = {}
             elif not common.LOCAL_MODE:
-                raise PermissionError("이 기능은 서버가 127.0.0.1로 실행 중일 때만 쓸 수 있습니다")
+                raise PermissionError(L("이 기능은 서버가 127.0.0.1로 실행 중일 때만 쓸 수 있습니다"))
             elif op == "rdp":
                 data = common.load("sessions", EMPTY)
                 s = _find(data, "sessions", m["sid"])
@@ -197,7 +198,7 @@ async def api_handler(ws):
             pass
         except Exception as e:
             msg, code = describe(e)
-            if msg.startswith("접속 실패: ") and not hasattr(e, "err"):
+            if not hasattr(e, "err") and msg == L("{stage}접속 실패: {err}", stage="", err=e):   # 접속 오류가 아니면 원래 메시지
                 msg = str(e)
             await send(id=rid, error=msg, code=code)
 

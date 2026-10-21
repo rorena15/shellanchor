@@ -25,7 +25,7 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-또는 **`실행(콘솔).bat`** 더블클릭 — `.venv`가 없으면 만들고 패키지를 설치한 뒤 바로 실행합니다.
+또는 **`run.bat`** 더블클릭 — `.venv`가 없으면 만들고 패키지를 설치한 뒤 바로 실행합니다.
 
 ## 실행
 
@@ -114,6 +114,12 @@ python server.py --no-tls         :: HTTPS 끄기 (평문 HTTP, 권장하지 않
 - **RDP**: RDP 세션 더블클릭 → Windows 원격 데스크톱 실행. "SSH 게이트웨이 경유"를 고르면 그 SSH 세션을 통해 터널을 만들고 연결
   (원격 데스크톱 창을 닫으면 터널도 자동 정리). 비밀번호는 원격 데스크톱 창에서 입력
 
+### 언어
+
+화면은 **한국어와 영어**를 지원합니다. 기본은 브라우저 언어를 따르고, ⚙설정 → 언어에서 바꿀 수 있습니다.
+서버가 보내는 메시지(접속 오류, SFTP 오류 등)도 같은 설정을 따릅니다.
+번역은 `static/i18n-en.js`(화면)와 `i18n.py`(서버)에 있습니다.
+
 ### 단축키
 
 | 동작                            | 키                       |
@@ -147,6 +153,7 @@ python server.py --no-tls         :: HTTPS 끄기 (평문 HTTP, 권장하지 않
 | `localterm.py`        | 로컬 터미널 (ConPTY)                                                                       |
 | `api.py`              | 세션 트리·설정 저장, 터널 제어, RDP 실행                                                   |
 | `tls.py`, `common.py` | 인증서, 공통 설정                                                                          |
+| `i18n.py`             | 서버 메시지 번역 (한국어 → 영어). 화면 번역은 `static/i18n-en.js`                               |
 | `static/`             | 화면 (core·app·tree·sftp·tunnels·highlight·toolbar .js)                                          |
 | `data/`               | `sessions.json`(세션·폴더·터널), `settings.json`, `known_hosts`, `rdp/` — 백업은 이 폴더만 |
 | `logs/`               | 세션 로그 (설정에서 위치 변경 가능)                                                        |

@@ -9,6 +9,8 @@ from pathlib import Path
 
 import paramiko
 
+from i18n import L
+
 from common import KNOWN_HOSTS
 
 _known_lock = threading.Lock()
@@ -20,7 +22,7 @@ class NeedPassphrase(Exception):
 
 def _load_pkey(text, passphrase):
     if text.lstrip().startswith("PuTTY-User-Key-File"):
-        raise ValueError("PuTTY .ppk 키는 지원하지 않습니다. PuTTYgen → Conversions → Export OpenSSH key로 변환하세요.")
+        raise ValueError(L("PuTTY .ppk 키는 지원하지 않습니다. PuTTYgen → Conversions → Export OpenSSH key로 변환하세요."))
     text = text.strip() + "\n"
     for cls in (paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey):
         try:
@@ -29,21 +31,21 @@ def _load_pkey(text, passphrase):
             raise NeedPassphrase()
         except paramiko.SSHException as e:
             if passphrase and "decrypt" in str(e).lower():
-                raise ValueError("키 암호가 틀렸습니다")
+                raise ValueError(L("키 암호가 틀렸습니다"))
         except Exception:
             pass
-    raise ValueError("개인키를 읽을 수 없습니다 (지원: Ed25519/ECDSA/RSA, OpenSSH·PEM 형식)")
+    raise ValueError(L("개인키를 읽을 수 없습니다 (지원: Ed25519/ECDSA/RSA, OpenSSH·PEM 형식)"))
 
 
 def pkey_from(p):
     if p.get("auth") == "keyfile" or (p.get("keyPath") and not p.get("key")):
         if not p.get("keyPath"):
-            raise ValueError("개인키 파일 경로가 비어 있습니다")
+            raise ValueError(L("개인키 파일 경로가 비어 있습니다"))
         path = Path(os.path.expandvars(os.path.expanduser(p["keyPath"])))
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError as e:
-            raise ValueError(f"개인키 파일을 열 수 없습니다: {path} ({e.strerror})")
+            raise ValueError(L("개인키 파일을 열 수 없습니다: {path} ({err})", path=path, err=e.strerror))
         return _load_pkey(text, p.get("passphrase"))
     if p.get("key"):
         return _load_pkey(p["key"], p.get("passphrase"))
@@ -64,7 +66,7 @@ class AskUserPolicy(paramiko.MissingHostKeyPolicy):
 
     def missing_host_key(self, client, hostname, key):
         if not self.ask(hostname, key.get_name(), fingerprint(key)):
-            raise paramiko.SSHException("사용자가 호스트 키를 거부했습니다")
+            raise paramiko.SSHException(L("사용자가 호스트 키를 거부했습니다"))
         with _known_lock:
             client.get_host_keys().add(hostname, key.get_name(), key)
             client.save_host_keys(str(KNOWN_HOSTS))
@@ -107,19 +109,19 @@ def open_chain(p, ask):
         try:
             jump = connect_one(j, ask)
         except Exception as e:
-            raise HopError(f"점프 호스트({j['host']})", e, "jump")
+            raise HopError(L("점프 호스트({host})", host=j['host']), e, "jump")
         try:
             sock = jump.get_transport().open_channel(
                 "direct-tcpip", (p["host"], int(p.get("port") or 22)), ("127.0.0.1", 0), timeout=10)
         except Exception as e:
             jump.close()
-            raise HopError(f"점프 호스트 → {p['host']} 연결", e, "jump")
+            raise HopError(L("점프 호스트 → {host} 연결", host=p['host']), e, "jump")
     try:
         client = connect_one(p, ask, sock)
     except Exception as e:
         if jump:
             jump.close()
-        raise HopError(f"대상 서버({p['host']})" if jump else "", e, "target")
+        raise HopError(L("대상 서버({host})", host=p['host']) if jump else "", e, "target")
     return client, jump
 
 
@@ -129,17 +131,17 @@ def describe(e):
     which = e.which if isinstance(e, HopError) else "target"
     stage = f"[{e.stage}] " if isinstance(e, HopError) and e.stage else ""
     if isinstance(err, NeedPassphrase):
-        return f"{stage}개인키에 암호가 걸려 있습니다.", f"passphrase:{which}"
+        return L("{stage}개인키에 암호가 걸려 있습니다.", stage=stage), f"passphrase:{which}"
     if isinstance(err, paramiko.BadHostKeyException):
-        return (f"{stage}⚠ 호스트 키가 저장된 값과 다릅니다! (MITM 가능성)\n"
-                f"저장됨: {err.expected_key.get_name()} {fingerprint(err.expected_key)}\n"
-                f"수신됨: {err.key.get_name()} {fingerprint(err.key)}\n"
-                f"서버를 재설치한 게 확실하면 known_hosts 파일에서 해당 줄을 지우세요."), "hostkey"
+        return L("{stage}⚠ 호스트 키가 저장된 값과 다릅니다! (MITM 가능성)\n저장됨: {expected}\n수신됨: {got}\n"
+                 "서버를 재설치한 게 확실하면 known_hosts 파일에서 해당 줄을 지우세요.", stage=stage,
+                 expected=f"{err.expected_key.get_name()} {fingerprint(err.expected_key)}",
+                 got=f"{err.key.get_name()} {fingerprint(err.key)}"), "hostkey"
     if isinstance(err, paramiko.AuthenticationException):
-        return f"{stage}인증 실패 — 사용자명/비밀번호/키를 확인하세요.", f"auth:{which}"
+        return L("{stage}인증 실패 — 사용자명/비밀번호/키를 확인하세요.", stage=stage), f"auth:{which}"
     if isinstance(err, paramiko.ChannelException):
-        return f"{stage}실패 — 점프 호스트가 대상에 연결하지 못했습니다 (주소/포트/AllowTcpForwarding 확인)", None
-    return f"{stage}접속 실패: {err}", None
+        return L("{stage}실패 — 점프 호스트가 대상에 연결하지 못했습니다 (주소/포트/AllowTcpForwarding 확인)", stage=stage), None
+    return L("{stage}접속 실패: {err}", stage=stage, err=err), None
 
 
 def scrub(p):

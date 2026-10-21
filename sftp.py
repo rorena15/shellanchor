@@ -17,6 +17,7 @@ import stat
 import paramiko
 from websockets.exceptions import ConnectionClosed
 
+from i18n import L
 from term import term_cwd
 
 CHUNK = 256 * 1024
@@ -43,13 +44,13 @@ def _err(e):
     if isinstance(e, OpError):
         return str(e)
     code = getattr(e, "errno", None)
-    msg = {errno.ENOENT: "파일/폴더가 없습니다", errno.EACCES: "권한이 없습니다",
-           errno.EEXIST: "이미 존재합니다"}.get(code)
+    msg = {errno.ENOENT: L("파일/폴더가 없습니다"), errno.EACCES: L("권한이 없습니다"),
+           errno.EEXIST: L("이미 존재합니다")}.get(code)
     if msg:
         return msg
     s = str(e)
     if "Failure" in s:
-        return "실패 (폴더가 비어 있지 않거나 권한 문제일 수 있음)"
+        return L("실패 (폴더가 비어 있지 않거나 권한 문제일 수 있음)")
     return s or type(e).__name__
 
 
@@ -76,7 +77,7 @@ async def sftp_handler(ws, sess):
     try:
         sftp = await T(client.open_sftp)
     except Exception as e:
-        await reply(id=0, error=f"SFTP를 열 수 없습니다: {_err(e)}")
+        await reply(id=0, error=L("SFTP를 열 수 없습니다: {err}", err=_err(e)))
         return
 
     def is_dir(a):
@@ -120,7 +121,7 @@ async def sftp_handler(ws, sess):
                 elif stat.S_ISREG(a.st_mode or 0):
                     res.append({"rel": r, "dir": False, "size": a.st_size or 0})
                 if len(res) > WALK_LIMIT:
-                    raise OpError(f"파일이 너무 많습니다 ({WALK_LIMIT:,}개 초과)")
+                    raise OpError(L("파일이 너무 많습니다 ({n}개 초과)", n=f"{WALK_LIMIT:,}"))
         return res
 
     def do_mkdirs(path):
@@ -132,7 +133,7 @@ async def sftp_handler(ws, sess):
             cur = join(cur, p) if cur not in (b"", b"/") else cur + p
             try:
                 if not is_dir(sftp.stat(cur)):
-                    raise OpError("같은 이름의 파일이 있습니다")
+                    raise OpError(L("같은 이름의 파일이 있습니다"))
             except FileNotFoundError:
                 sftp.mkdir(cur)
 
@@ -176,24 +177,24 @@ async def sftp_handler(ws, sess):
     def do_chown(path, owner, group, recursive):
         spec = owner + (f":{group}" if group else "")
         if not spec or any(c in spec for c in " /'\"\\"):
-            raise OpError("소유자/그룹 이름이 올바르지 않습니다")
+            raise OpError(L("소유자/그룹 이름이 올바르지 않습니다"))
         cmd = b"chown " + (b"-R " if recursive else b"") + b"-- " + \
             shlex.quote(spec).encode(enc) + b" " + shlex.quote(path).encode(enc, "replace")
         stdin, stdout, stderr = client.exec_command(cmd, timeout=30)
         err = stderr.read().decode(enc, "replace").strip()
         if stdout.channel.recv_exit_status() != 0:
-            raise OpError(err or "chown 실패 (root 권한이 필요할 수 있음)")
+            raise OpError(err or L("chown 실패 (root 권한이 필요할 수 있음)"))
 
     def do_read(path):
         p = to_srv(path)
         st = sftp.stat(p)
         if (st.st_size or 0) > EDIT_LIMIT:
-            raise OpError(f"파일이 너무 큽니다 ({EDIT_LIMIT // 1024 // 1024}MB 초과) — 다운로드해서 여세요", "toobig")
+            raise OpError(L("파일이 너무 큽니다 ({mb}MB 초과) — 다운로드해서 여세요", mb=EDIT_LIMIT // 1024 // 1024), "toobig")
         with sftp.open(p, "rb") as f:
             f.prefetch(st.st_size)
             data = f.read()
         if b"\x00" in data[:8192]:
-            raise OpError("바이너리 파일이라 편집할 수 없습니다", "binary")
+            raise OpError(L("바이너리 파일이라 편집할 수 없습니다"), "binary")
         try:
             text, lossy = data.decode(enc), False
         except UnicodeDecodeError:
@@ -212,13 +213,13 @@ async def sftp_handler(ws, sess):
         try:
             st = sftp.stat(p)
             if expect_mtime and st.st_mtime != expect_mtime and not force:
-                raise OpError("편집하는 동안 서버의 파일이 바뀌었습니다", "conflict")
+                raise OpError(L("편집하는 동안 서버의 파일이 바뀌었습니다"), "conflict")
         except FileNotFoundError:
             pass
         try:
             data = text.encode(file_enc or enc)
         except UnicodeEncodeError as e:
-            raise OpError(f"{file_enc or enc}로 저장할 수 없는 문자가 있습니다: {e.object[e.start:e.end]!r}")
+            raise OpError(L("{enc}로 저장할 수 없는 문자가 있습니다: {ch}", enc=file_enc or enc, ch=repr(e.object[e.start:e.end])))
         with sftp.open(p, "wb") as f:
             f.set_pipelined(True)
             f.write(data)

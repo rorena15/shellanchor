@@ -10,6 +10,7 @@ import threading
 from websockets.exceptions import ConnectionClosed
 
 import common
+from i18n import L
 from sshconn import describe, exec_sh, exec_text, open_chain, scrub
 
 ENCODINGS = {"utf-8": "utf-8", "euc-kr": "cp949"}   # cp949 = EUC-KR 확장(똠·햏 등 포함)
@@ -37,7 +38,7 @@ class SessionLog:
         self.path = d / f"{now:%Y-%m-%d_%H%M%S}_{_safe(target.split('@')[-1])}.log"
         self.f = open(self.path, "a", encoding="utf-8", newline="\n")
         self.pending = ""
-        self.f.write(f"===== {now:%Y-%m-%d %H:%M:%S} {target} 접속 =====\n")
+        self.f.write(f"===== {now:%Y-%m-%d %H:%M:%S} {target} {L('접속')} =====\n")
         self.f.flush()
 
     def write(self, text):
@@ -52,7 +53,7 @@ class SessionLog:
             self.f.flush()
 
     def close(self):
-        self.f.write(f"\n===== {dt.datetime.now():%Y-%m-%d %H:%M:%S} 종료 =====\n")
+        self.f.write(f"\n===== {dt.datetime.now():%Y-%m-%d %H:%M:%S} {L('종료')} =====\n")
         self.f.close()
 
 
@@ -185,7 +186,7 @@ async def terminal_handler(ws):
         try:
             log = SessionLog(p["log"].get("name") or p["host"], target)
         except OSError as e:
-            await send_json(type="notice", message=f"로그 파일을 만들 수 없습니다: {e}")
+            await send_json(type="notice", message=L("로그 파일을 만들 수 없습니다: {e}", e=e))
     print(f"[+] {peer[0]} → {target}")
     await send_json(type="connected", sid=sid, log=str(log.path) if log else None)
 

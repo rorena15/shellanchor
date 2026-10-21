@@ -3,7 +3,7 @@
 
 const TERM_SCHEMES = {
   light: {
-    name: '밝게 (One Half Light)', background: '#fafafa', foreground: '#383a42', cursor: '#4f525d', cursorAccent: '#fafafa',
+    name: L('밝게 (One Half Light)'), background: '#fafafa', foreground: '#383a42', cursor: '#4f525d', cursorAccent: '#fafafa',
     selectionBackground: '#bfceff99',
     black: '#383a42', red: '#e45649', green: '#50a14f', yellow: '#c18401', blue: '#0184bc', magenta: '#a626a4', cyan: '#0997b3', white: '#8e9097',
     brightBlack: '#696c77', brightRed: '#ca1243', brightGreen: '#3e8f3d', brightYellow: '#986801', brightBlue: '#4078f2', brightMagenta: '#a626a4', brightCyan: '#0184bc', brightWhite: '#383a42',
@@ -15,7 +15,7 @@ const TERM_SCHEMES = {
     brightBlack: '#002b36', brightRed: '#cb4b16', brightGreen: '#586e75', brightYellow: '#657b83', brightBlue: '#839496', brightMagenta: '#6c71c4', brightCyan: '#2aa198', brightWhite: '#073642',
   },
   classic: {   // 클래식 다크 (글자 236,236,236 / 배경 30,30,30 / 커서 180,180,192)
-    name: '클래식 다크', background: '#1e1e1e', foreground: '#ececec', cursor: '#b4b4c0', cursorAccent: '#1e1e1e',
+    name: L('클래식 다크'), background: '#1e1e1e', foreground: '#ececec', cursor: '#b4b4c0', cursorAccent: '#1e1e1e',
     selectionBackground: '#4a5a7a99',
     black: '#000000', red: '#cd0000', green: '#00cd00', yellow: '#cdcd00', blue: '#3b78ff', magenta: '#cd00cd', cyan: '#00cdcd', white: '#e5e5e5',
     brightBlack: '#7f7f7f', brightRed: '#ff3333', brightGreen: '#33ff33', brightYellow: '#ffff33', brightBlue: '#6c8cff', brightMagenta: '#ff33ff', brightCyan: '#33ffff', brightWhite: '#ffffff',
@@ -27,7 +27,7 @@ const TERM_SCHEMES = {
     brightBlack: '#767676', brightRed: '#e74856', brightGreen: '#16c60c', brightYellow: '#f9f1a5', brightBlue: '#3b78ff', brightMagenta: '#b4009e', brightCyan: '#61d6d6', brightWhite: '#f2f2f2',
   },
   dark: {
-    name: '어둡게 (기본 다크)', background: '#1e1f24', foreground: '#e6e6e6', cursor: '#e6e6e6', cursorAccent: '#1e1f24',
+    name: L('어둡게 (기본 다크)'), background: '#1e1f24', foreground: '#e6e6e6', cursor: '#e6e6e6', cursorAccent: '#1e1f24',
     selectionBackground: '#4f8cff66',
     black: '#2e3036', red: '#f85149', green: '#3fb950', yellow: '#d29922', blue: '#4f8cff', magenta: '#bc8cff', cyan: '#39c5cf', white: '#d0d4dc',
     brightBlack: '#6e7681', brightRed: '#ff7b72', brightGreen: '#56d364', brightYellow: '#e3b341', brightBlue: '#79c0ff', brightMagenta: '#d2a8ff', brightCyan: '#56d4dd', brightWhite: '#ffffff',
@@ -46,7 +46,7 @@ const TERM_SCHEMES = {
   },
 };
 
-const UI_THEMES = { light: '라이트', dark: '다크', system: 'Windows 설정 따라가기' };
+const UI_THEMES = { light: L('라이트'), dark: L('다크'), system: L('Windows 설정 따라가기') };
 const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 
 function uiThemeSetting() { return store.get('uiTheme', 'light'); }

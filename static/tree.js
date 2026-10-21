@@ -15,7 +15,7 @@ function allFolders() {
   return [...set].sort((a, b) => a.localeCompare(b, 'ko'));
 }
 const sessName = (s) => s.name || (s.type === 'local' ? shellName(s.shell) : targetStr(s));
-const sessSub = (s) => s.type === 'local' ? '로컬 터미널' : targetStr(s) + (s.type === 'rdp' ? ' · RDP' : '') + (s.jump?.host || s.gateway ? ' · 경유' : '');
+const sessSub = (s) => s.type === 'local' ? L('로컬 터미널') : targetStr(s) + (s.type === 'rdp' ? ' · RDP' : '') + (s.jump?.host || s.gateway ? ' · ' + L('경유') : '');
 
 // ── 트리 그리기 ─────────────────────────────────────────
 function renderTree() {
@@ -57,7 +57,7 @@ function renderTree() {
     row.querySelector('.ic').textContent = ICON[s.type] || '🖥';
     row.querySelector('.nm').textContent = sessName(s);
     row.querySelector('.sub').textContent = sessSub(s);
-    row.title = `${sessName(s)}\n${sessSub(s)}${s.log ? '\n세션 로그 저장' : ''}`;
+    row.title = `${sessName(s)}\n${sessSub(s)}${s.log ? '\n' + L('세션 로그 저장') : ''}`;
     row.dataset.sid = s.id;
     row.draggable = true;
     row.onclick = () => selectTree({ kind: 'session', id: s.id });
@@ -70,8 +70,8 @@ function renderTree() {
   childFolders('').forEach((f) => addFolder(f, 0));
   sessionsIn('').forEach((s) => addSession(s, 0));
   if (!box.children.length) {
-    box.innerHTML = q ? '<div class="side-empty">검색 결과 없음</div>'
-      : '<div class="side-empty">저장된 세션이 없습니다.<br>＋ 로 만들거나 ⤓ 로 MobaXterm 세션을 가져오세요.</div>';
+    box.innerHTML = q ? '<div class="side-empty">' + L('검색 결과 없음') + '</div>'
+      : '<div class="side-empty">' + L('저장된 세션이 없습니다.') + '<br>' + L('＋ 로 만들거나 ⤓ 로 MobaXterm 세션을 가져오세요.') + '</div>';
   }
   paintTreeSel();
   $('#folderList').innerHTML = folders.map((f) => `<option value="${escapeHtml(f)}">`).join('');
@@ -100,9 +100,9 @@ $('#tree').addEventListener('contextmenu', (e) => {
   if (e.target.closest('.tr-row')) return;
   e.preventDefault();
   showMenu(e.clientX, e.clientY, [
-    { label: '새 세션', action: () => editSession(null, '') },
-    { label: '새 폴더', action: () => newFolder('') },
-    { label: 'MobaXterm 세션 가져오기…', action: () => $('#importFile').click() },
+    { label: L('새 세션'), action: () => editSession(null, '') },
+    { label: L('새 폴더'), action: () => newFolder('') },
+    { label: L('MobaXterm 세션 가져오기…'), action: () => $('#importFile').click() },
   ]);
 });
 
@@ -142,29 +142,29 @@ function moveTo(item, folder) {
 // ── 메뉴 ─────────────────────────────────────────────
 function sessionMenu(s, x, y) {
   showMenu(x, y, [
-    { label: s.type === 'rdp' ? '원격 데스크톱 열기' : '접속', hint: '더블클릭', action: () => openSpec(s) },
-    { label: '편집…', hint: 'F2', action: () => editSession(s) },
-    { label: '복제', action: () => duplicateSession(s) },
-    s.log ? { label: '로그 폴더 열기', action: () => api.call('openLogs', { name: s.name || s.host }).catch((e) => toast(e.message)) } : null,
+    { label: s.type === 'rdp' ? L('원격 데스크톱 열기') : L('접속'), hint: L('더블클릭'), action: () => openSpec(s) },
+    { label: L('편집…'), hint: 'F2', action: () => editSession(s) },
+    { label: L('복제'), action: () => duplicateSession(s) },
+    s.log ? { label: L('로그 폴더 열기'), action: () => api.call('openLogs', { name: s.name || s.host }).catch((e) => toast(e.message)) } : null,
     '-',
-    { label: '삭제', hint: 'Del', danger: true, action: () => deleteSession(s) },
+    { label: L('삭제'), hint: 'Del', danger: true, action: () => deleteSession(s) },
   ]);
 }
 function folderMenu(f, x, y) {
   showMenu(x, y, [
-    { label: '이 폴더에 새 세션', action: () => editSession(null, f) },
-    { label: '하위 폴더 만들기', action: () => newFolder(f) },
-    { label: '이름 바꾸기', action: () => renameFolder(f) },
+    { label: L('이 폴더에 새 세션'), action: () => editSession(null, f) },
+    { label: L('하위 폴더 만들기'), action: () => newFolder(f) },
+    { label: L('이름 바꾸기'), action: () => renameFolder(f) },
     '-',
-    { label: '폴더 삭제', danger: true, action: () => deleteFolder(f) },
+    { label: L('폴더 삭제'), danger: true, action: () => deleteFolder(f) },
   ]);
 }
 
 function newFolder(parent) {
-  const name = prompt('새 폴더 이름');
+  const name = prompt(L('새 폴더 이름'));
   if (!name) return;
   const path = (parent ? parent + '/' : '') + name.replace(/\//g, '／').trim();
-  if (allFolders().includes(path)) return toast('이미 있는 폴더입니다');
+  if (allFolders().includes(path)) return toast(L('이미 있는 폴더입니다'));
   DB.folders = [...(DB.folders || []), path];
   if (parent) openFolders.add(parent);
   openFolders.add(path);
@@ -179,30 +179,30 @@ function renameFolderPath(src, dst) {
   store.set('openFolders', [...openFolders]);
 }
 function renameFolder(f) {
-  const name = prompt('새 이름', f.split('/').pop());
+  const name = prompt(L('새 이름'), f.split('/').pop());
   if (!name) return;
   const dst = f.split('/').slice(0, -1).concat(name.replace(/\//g, '／').trim()).join('/');
   if (dst === f) return;
-  if (allFolders().includes(dst)) return toast('이미 있는 폴더입니다');
+  if (allFolders().includes(dst)) return toast(L('이미 있는 폴더입니다'));
   renameFolderPath(f, dst);
   saveDB(); renderTree();
 }
 function deleteFolder(f) {
   const inside = DB.sessions.filter((s) => s.folder === f || (s.folder || '').startsWith(f + '/'));
-  if (!confirm(inside.length ? `"${f}" 폴더와 안의 세션 ${inside.length}개를 삭제할까요?` : `"${f}" 폴더를 삭제할까요?`)) return;
+  if (!confirm(inside.length ? L('"{f}" 폴더와 안의 세션 {n}개를 삭제할까요?', { f, n: inside.length }) : L('"{f}" 폴더를 삭제할까요?', { f }))) return;
   DB.sessions = DB.sessions.filter((s) => !inside.includes(s));
   DB.folders = (DB.folders || []).filter((x) => x !== f && !x.startsWith(f + '/'));
   saveDB(); renderTree();
 }
 function deleteSession(s) {
-  if (!confirm(`세션 "${sessName(s)}"을(를) 삭제할까요?`)) return;
+  if (!confirm(L('세션 "{name}"을(를) 삭제할까요?', { name: sessName(s) }))) return;
   DB.sessions = DB.sessions.filter((x) => x !== s);
   saveDB(); renderTree(); renderRecent();
 }
 function duplicateSession(s) {
   const c = JSON.parse(JSON.stringify(s));
   c.id = uid();
-  c.name = sessName(s) + ' (복사)';
+  c.name = L('{name} (복사)', { name: sessName(s) });
   DB.sessions.push(c);
   saveDB(); renderTree();
   editSession(c);
@@ -225,12 +225,12 @@ function syncSessionForm() {
   sForm.port.placeholder = type === 'rdp' ? '3389' : '22';
   sForm.querySelector('.keyfile-row').hidden = sForm.auth.value !== 'keyfile';
   sForm.querySelector('.j-keyfile-row').hidden = sForm.j_auth.value !== 'keyfile';
-  $('#sdConnect').textContent = type === 'rdp' ? '저장하고 열기' : '저장하고 접속';
+  $('#sdConnect').textContent = type === 'rdp' ? L('저장하고 열기') : L('저장하고 접속');
 }
 sForm.addEventListener('change', syncSessionForm);
 $$('.pick', sForm).forEach((b) => {
   b.onclick = async () => {
-    if (!CAPS.local) return toast('파일 선택창은 서버가 127.0.0.1로 실행 중일 때만 됩니다');
+    if (!CAPS.local) return toast(L('파일 선택창은 서버가 127.0.0.1로 실행 중일 때만 됩니다'));
     b.disabled = true;
     try { const r = await api.call('pickFile'); if (r.path) sForm[b.dataset.for].value = r.path; }
     catch (e) { toast(e.message, 3000); }
@@ -242,7 +242,7 @@ $$('.pick', sForm).forEach((b) => {
 async function editSession(s, folder = '', preset = null) {
   const src = s || preset || {};
   const isNew = !s;
-  $('#sdTitle').textContent = isNew ? '새 세션' : '세션 편집';
+  $('#sdTitle').textContent = isNew ? L('새 세션') : L('세션 편집');
   sForm.stype.value = src.type || 'ssh';
   sForm.name.value = src.name || '';
   sForm.folder.value = s ? s.folder || '' : src.folder ?? folder;
@@ -262,14 +262,14 @@ async function editSession(s, folder = '', preset = null) {
   sForm.j_auth.value = j.auth === 'keyfile' ? 'keyfile' : 'password';
   sForm.j_keyPath.value = j.keyPath || '';
   sForm.screen.value = src.screen || 'full';
-  sForm.gateway.innerHTML = '<option value="">(직접 접속)</option>' + DB.sessions.filter((x) => x.type === 'ssh')
+  sForm.gateway.innerHTML = '<option value="">' + L('(직접 접속)') + '</option>' + DB.sessions.filter((x) => x.type === 'ssh')
     .map((x) => `<option value="${x.id}">${escapeHtml(sessName(x))} — ${escapeHtml(targetStr(x))}</option>`).join('');
   sForm.gateway.value = src.gateway || '';
   sForm.clipboard.checked = src.clipboard !== false;
   sForm.drives.checked = !!src.drives;
   sForm.multimon.checked = !!src.multimon;
   sForm.shell.innerHTML = CAPS.shells.map((x) => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join('')
-    || '<option value="">(사용 가능한 셸 없음)</option>';
+    || '<option value="">' + L('(사용 가능한 셸 없음)') + '</option>';
   sForm.shell.value = src.shell || CAPS.shells[0]?.id || '';
   $('#sdError').textContent = '';
   syncSessionForm();
@@ -302,11 +302,11 @@ async function editSession(s, folder = '', preset = null) {
     } else {
       v.shell = sForm.shell.value;
     }
-    const err = type !== 'local' && !v.host ? '호스트를 입력하세요'
-      : type === 'ssh' && !v.username ? '사용자를 입력하세요'
-      : type === 'ssh' && v.auth === 'keyfile' && !v.keyPath ? '개인키 파일 경로를 입력하세요'
-      : v.jump && !v.jump.username ? '점프 호스트 사용자를 입력하세요'
-      : type === 'local' && !v.shell ? '사용할 수 있는 셸이 없습니다' : '';
+    const err = type !== 'local' && !v.host ? L('호스트를 입력하세요')
+      : type === 'ssh' && !v.username ? L('사용자를 입력하세요')
+      : type === 'ssh' && v.auth === 'keyfile' && !v.keyPath ? L('개인키 파일 경로를 입력하세요')
+      : v.jump && !v.jump.username ? L('점프 호스트 사용자를 입력하세요')
+      : type === 'local' && !v.shell ? L('사용할 수 있는 셸이 없습니다') : '';
     if (err) { $('#sdError').textContent = err; continue; }
 
     if (s) Object.keys(s).forEach((k) => delete s[k]);
@@ -338,7 +338,7 @@ function renderRecent() {
   const ul = $('#recentList');
   ul.innerHTML = '';
   const items = store.get('recent', []).map(findSession).filter(Boolean).slice(0, 8);
-  if (!items.length) { ul.innerHTML = '<li class="dim">아직 없음</li>'; return; }
+  if (!items.length) { ul.innerHTML = '<li class="dim">' + L('아직 없음') + '</li>'; return; }
   for (const s of items) {
     const li = document.createElement('li');
     li.innerHTML = `<span class="ic"></span><b></b><span class="dim"></span>`;
@@ -386,7 +386,7 @@ function parseMobaXterm(text) {
 }
 
 $('#treeImport').onclick = () => {
-  toast('MobaXterm.ini 또는 내보낸 .mxtsessions 파일을 선택하세요', 2500);
+  toast(L('MobaXterm.ini 또는 내보낸 .mxtsessions 파일을 선택하세요'), 2500);
   $('#importFile').click();
 };
 $('#importFile').onchange = async (e) => {
@@ -398,21 +398,21 @@ $('#importFile').onchange = async (e) => {
   try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
   catch { text = new TextDecoder('euc-kr').decode(buf); }       // MobaXterm은 ANSI(cp949)로 저장
   const r = parseMobaXterm(text);
-  if (!r.sessions.length) return toast('가져올 SSH/RDP 세션을 찾지 못했습니다', 3000);
+  if (!r.sessions.length) return toast(L('가져올 SSH/RDP 세션을 찾지 못했습니다'), 3000);
   const key = (s) => [s.type, s.host, s.port, s.username, s.folder].join('|');
   const have = new Set(DB.sessions.map(key));
   const add = r.sessions.filter((s) => !have.has(key(s)));
   const usersMissing = add.filter((s) => s.type === 'ssh' && !s.username).length;
-  if (!confirm(`${file.name}\nSSH ${r.sessions.filter((s) => s.type === 'ssh').length}개, RDP ${r.sessions.filter((s) => s.type === 'rdp').length}개를 찾았습니다.\n` +
-               `새로 추가: ${add.length}개 (이미 있는 ${r.sessions.length - add.length}개는 건너뜀)` +
-               (r.skipped ? `\n지원하지 않는 종류 ${r.skipped}개는 제외` : '') +
-               (usersMissing ? `\n※ 사용자 이름이 없는 세션 ${usersMissing}개는 접속 전에 편집에서 입력하세요.` : '') +
-               '\n\n비밀번호는 가져오지 않습니다. 계속할까요?')) return;
+  if (!confirm(`${file.name}\n` + L('SSH {ssh}개, RDP {rdp}개를 찾았습니다.', { ssh: r.sessions.filter((s) => s.type === 'ssh').length, rdp: r.sessions.filter((s) => s.type === 'rdp').length }) + '\n' +
+               L('새로 추가: {add}개 (이미 있는 {skip}개는 건너뜀)', { add: add.length, skip: r.sessions.length - add.length }) +
+               (r.skipped ? '\n' + L('지원하지 않는 종류 {n}개는 제외', { n: r.skipped }) : '') +
+               (usersMissing ? '\n' + L('※ 사용자 이름이 없는 세션 {n}개는 접속 전에 편집에서 입력하세요.', { n: usersMissing }) : '') +
+               '\n\n' + L('비밀번호는 가져오지 않습니다. 계속할까요?'))) return;
   DB.sessions.push(...add);
   DB.folders = [...new Set([...(DB.folders || []), ...r.folders])];
   await saveDB();
   renderTree();
-  toast(`${add.length}개 세션을 가져왔습니다`, 2500);
+  toast(L('{n}개 세션을 가져왔습니다', { n: add.length }), 2500);
 };
 
 // 이전 버전(브라우저에 저장된 접속 목록) 옮기기
@@ -422,7 +422,7 @@ function migrateOldProfiles() {
   for (const p of old) {
     if (DB.sessions.some((s) => s.host === p.host && s.username === p.username && (s.port || 22) === (p.port || 22))) continue;
     DB.sessions.push({
-      id: uid(), type: 'ssh', name: p.name || '', folder: '이전 접속 기록', host: p.host, port: p.port || 22, username: p.username,
+      id: uid(), type: 'ssh', name: p.name || '', folder: L('이전 접속 기록'), host: p.host, port: p.port || 22, username: p.username,
       auth: 'password', keyPath: '', encoding: p.encoding || 'utf-8', log: !!SETTINGS.logDefault, reconnect: true,
       jump: p.jump ? { ...p.jump, auth: 'password', keyPath: '' } : null,
     });
@@ -441,7 +441,7 @@ function applySettings(s) {
 function hlRow(r = { pattern: '', color: '#ff6b6b', on: true }) {
   const row = document.createElement('div');
   row.className = 'hl-row';
-  row.innerHTML = `<input type="checkbox" class="on"><input class="pat mono" spellcheck="false" placeholder="정규식 예: \\bfail\\w*"><input type="color" class="col"><button type="button" title="삭제">✕</button>`;
+  row.innerHTML = `<input type="checkbox" class="on"><input class="pat mono" spellcheck="false" placeholder="${L('정규식 예:')} \\bfail\\w*"><input type="color" class="col"><button type="button" title="${L('삭제')}">✕</button>`;
   row.querySelector('.on').checked = r.on !== false;
   row.querySelector('.pat').value = r.pattern;
   row.querySelector('.col').value = r.color;
@@ -457,7 +457,7 @@ $('#themeBtn').onclick = () => {
 $('#shutdownBtn').onclick = async () => {
   const running = Object.values(TUNNEL_STATUS).filter((s) => s.state !== 'off').length;
   const live = tabs.filter((t) => t.state === 'on').length;
-  if (!confirm(`중계 서버를 종료할까요?${live ? `\n열린 접속 ${live}개가 끊깁니다.` : ''}${running ? `\n실행 중인 터널 ${running}개도 멈춥니다.` : ''}`)) return;
+  if (!confirm(L('중계 서버를 종료할까요?') + (live ? '\n' + L('열린 접속 {n}개가 끊깁니다.', { n: live }) : '') + (running ? '\n' + L('실행 중인 터널 {n}개도 멈춥니다.', { n: running }) : ''))) return;
   $('#settingsDlg').close();
   api.stopped = true;          // 이후 끊김은 자동 재접속하지 않음
   try { await api.call('shutdown'); } catch {}
@@ -474,10 +474,14 @@ $('#tbSettings').onclick = async () => {
   // 화면 테마 (브라우저별 저장, 고르면 바로 미리보기)
   const ui0 = uiThemeSetting(), term0 = store.get('termScheme', 'auto');
   f.uiTheme.innerHTML = Object.entries(UI_THEMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-  f.termScheme.innerHTML = '<option value="auto">화면 테마에 맞춤</option>' +
+  f.termScheme.innerHTML = '<option value="auto">' + L('화면 테마에 맞춤') + '</option>' +
     Object.entries(TERM_SCHEMES).map(([k, v]) => `<option value="${k}">${escapeHtml(v.name)}</option>`).join('');
   f.uiTheme.value = ui0;
   f.termScheme.value = term0;
+  // 언어 (브라우저별 저장). 언어 이름은 번역하지 않고 각 언어로 표시
+  const lang0 = store.get('lang', 'auto');
+  f.lang.innerHTML = `<option value="auto">${L('자동 (브라우저 언어)')}</option><option value="ko">한국어</option><option value="en">English</option>`;
+  f.lang.value = lang0;
   const preview = () => {
     applyTheme(f.uiTheme.value, f.termScheme.value);
     const t = TERM_SCHEMES[schemeKey(f.termScheme.value, currentUi(f.uiTheme.value))];
@@ -502,7 +506,7 @@ $('#tbSettings').onclick = async () => {
     pattern: r.querySelector('.pat').value.trim(), color: r.querySelector('.col').value, on: r.querySelector('.on').checked,
   })).filter((r) => r.pattern);
   const bad = highlight.find((r) => { try { new RegExp(r.pattern); return false; } catch { return true; } });
-  if (bad) return toast(`잘못된 정규식: ${bad.pattern}`, 3500);
+  if (bad) return toast(L('잘못된 정규식: {p}', { p: bad.pattern }), 3500);
   const next = { ...SETTINGS, logDir: f.logDir.value.trim(), logDefault: f.logDefault.checked, monitor: f.monitor.checked,
                  followFolder: f.followFolder.checked, highlight };
   try {
@@ -510,8 +514,14 @@ $('#tbSettings').onclick = async () => {
     LOGDIR = r.logDir;
     applySettings(next);
     tabs.forEach((t) => sendCtl(t, { type: 'monitor', on: next.monitor && t === focused() }));
-    toast('설정 저장됨', 1000);
-  } catch (e) { toast('저장 실패: ' + e.message, 3000); }
+    toast(L('설정 저장됨'), 1000);
+  } catch (e) { toast(L('저장 실패: {msg}', { msg: e.message }), 3000); }
+  // 언어는 화면 전체를 다시 그려야 해서 새로고침으로 적용. 열린 접속이 있으면 끊기지 않게 다음에 열 때 적용
+  if (f.lang.value !== lang0) {
+    store.set('lang', f.lang.value);
+    if (tabs.length) toast(L('언어는 창을 다시 열면 적용됩니다'), 3000);
+    else location.reload();
+  }
 };
 
 // ── 시작 ─────────────────────────────────────────────
@@ -536,6 +546,6 @@ async function loadAll() {
   api.onReopen = () => loadAll().catch(() => {});
   renderLayout();
   try { await loadAll(); }
-  catch (e) { toast('서버에서 설정을 읽지 못했습니다: ' + e.message, 4000); }
-  $('#sbText').textContent = '준비';
+  catch (e) { toast(L('서버에서 설정을 읽지 못했습니다: {msg}', { msg: e.message }), 4000); }
+  $('#sbText').textContent = L('준비');
 })();

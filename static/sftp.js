@@ -18,7 +18,7 @@ function openChan(sid) {
       send(o) { ws.send(o instanceof ArrayBuffer ? o : JSON.stringify(o)); },
       recv() {
         if (queue.length) return Promise.resolve(queue.shift());
-        if (chan.closed) return Promise.reject(new Error('SFTP 연결이 끊어졌습니다'));
+        if (chan.closed) return Promise.reject(new Error(L('SFTP 연결이 끊어졌습니다')));
         return new Promise((res, rej) => waiters.push({ res, rej }));
       },
       async req(o) {           // JSON 요청 → 응답 (오류면 throw)
@@ -31,14 +31,14 @@ function openChan(sid) {
       close() { ws.close(); },
     };
     ws.onopen = () => resolve(chan);
-    ws.onerror = () => reject(new Error('SFTP 연결 실패'));
+    ws.onerror = () => reject(new Error(L('SFTP 연결 실패')));
     ws.onmessage = (ev) => {
       const d = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
       if (waiters.length) waiters.shift().res(d); else queue.push(d);
     };
     ws.onclose = () => {
       chan.closed = true;
-      while (waiters.length) waiters.shift().rej(new Error('SFTP 연결이 끊어졌습니다'));
+      while (waiters.length) waiters.shift().rej(new Error(L('SFTP 연결이 끊어졌습니다')));
     };
   });
 }
@@ -107,6 +107,7 @@ class SftpPanel {
       <div class="sf-xfers"></div>
       <input type="file" multiple hidden class="sf-files">
       <input type="file" webkitdirectory hidden class="sf-folder">`;
+    translateDom(el);
     $('#side-sftp').appendChild(el);
     el.querySelector('.sf-who').textContent = targetStr(s.spec);
 
@@ -154,13 +155,13 @@ class SftpPanel {
       e.preventDefault();
       this.sel.clear(); this.paintSel();
       showMenu(e.clientX, e.clientY, [
-        { label: '새 폴더', action: () => this.mkdir() },
-        { label: '새 파일', action: () => this.mkfile() },
+        { label: L('새 폴더'), action: () => this.mkdir() },
+        { label: L('새 파일'), action: () => this.mkfile() },
         '-',
-        { label: '파일 업로드…', action: act.upFiles },
-        { label: '폴더 업로드…', action: act.upFolder },
-        { label: '새로고침', action: act.refresh },
-        { label: '경로 복사', action: () => this.copyPath(this.cwd) },
+        { label: L('파일 업로드…'), action: act.upFiles },
+        { label: L('폴더 업로드…'), action: act.upFolder },
+        { label: L('새로고침'), action: act.refresh },
+        { label: L('경로 복사'), action: () => this.copyPath(this.cwd) },
       ]);
     });
     list.addEventListener('click', (e) => { if (!e.target.closest('.sf-row')) { this.sel.clear(); this.paintSel(); } });
@@ -179,7 +180,7 @@ class SftpPanel {
     if (!this.s.sid) {
       this.chan?.close();
       this.chan = null;
-      this.showMsg('SSH 연결이 끊어져 있습니다.\n재접속하면 다시 연결됩니다.');
+      this.showMsg(L('SSH 연결이 끊어져 있습니다.\n재접속하면 다시 연결됩니다.'));
     } else {
       this.showMsg('');
       if (this.chanSid !== this.s.sid && this.visible) this.list(this.cwd);
@@ -194,7 +195,7 @@ class SftpPanel {
 
   call(op, args = {}) {
     const run = async () => {
-      if (!this.s.sid) throw new Error('SSH 연결이 끊어져 있습니다');
+      if (!this.s.sid) throw new Error(L('SSH 연결이 끊어져 있습니다'));
       if (!this.chan || this.chan.closed || this.chanSid !== this.s.sid) {
         this.chan?.close();
         this.chan = await openChan(this.s.sid);
@@ -228,7 +229,7 @@ class SftpPanel {
     this.followPending = false;
     const broken = () => {
       this.followBroken = true;
-      this.el.querySelector('.sf-follow').title = '이 서버에서는 지원되지 않습니다 (Linux /proc 필요)';
+      this.el.querySelector('.sf-follow').title = L('이 서버에서는 지원되지 않습니다 (Linux /proc 필요)');
       this.el.querySelector('.sf-follow').classList.add('broken');
     };
     try {
@@ -244,7 +245,7 @@ class SftpPanel {
     this.s.term.focus();
   }
 
-  copyPath(p) { navigator.clipboard?.writeText(p).then(() => toast('경로 복사됨', 900)); }
+  copyPath(p) { navigator.clipboard?.writeText(p).then(() => toast(L('경로 복사됨'), 900)); }
 
   // ── 목록 ──
   render() {
@@ -261,7 +262,7 @@ class SftpPanel {
     if (!this.entries.length) {
       const e = document.createElement('div');
       e.className = 'sf-empty';
-      e.textContent = '빈 폴더';
+      e.textContent = L('빈 폴더');
       box.appendChild(e);
     }
     this.entries.forEach((e, idx) => {
@@ -324,16 +325,16 @@ class SftpPanel {
     const one = sel.length === 1 ? sel[0] : null;
     const n = sel.length;
     showMenu(x, y, [
-      one?.dir ? { label: '열기', action: () => this.open(one) } : null,
-      one && !one.dir ? { label: '편집', hint: '더블클릭', action: () => openEditor(this, one) } : null,
-      { label: n > 1 ? `다운로드 (${n}개)` : one.dir ? '폴더 다운로드…' : '다운로드', action: () => this.download(sel) },
+      one?.dir ? { label: L('열기'), action: () => this.open(one) } : null,
+      one && !one.dir ? { label: L('편집'), hint: L('더블클릭'), action: () => openEditor(this, one) } : null,
+      { label: n > 1 ? L('다운로드 ({n}개)', { n }) : one.dir ? L('폴더 다운로드…') : L('다운로드'), action: () => this.download(sel) },
       '-',
-      one ? { label: '이름 바꾸기', hint: 'F2', action: () => this.rename(one) } : null,
-      { label: '권한 / 소유자…', action: () => openChmod(this, sel) },
-      one ? { label: '경로 복사', action: () => this.copyPath(joinPath(this.cwd, one.name)) } : null,
-      one?.dir ? { label: '터미널에서 이 폴더로 cd', action: () => { this.cwd = joinPath(this.cwd, one.name); this.cwdToTerminal(); this.list(this.cwd); } } : null,
+      one ? { label: L('이름 바꾸기'), hint: 'F2', action: () => this.rename(one) } : null,
+      { label: L('권한 / 소유자…'), action: () => openChmod(this, sel) },
+      one ? { label: L('경로 복사'), action: () => this.copyPath(joinPath(this.cwd, one.name)) } : null,
+      one?.dir ? { label: L('터미널에서 이 폴더로 cd'), action: () => { this.cwd = joinPath(this.cwd, one.name); this.cwdToTerminal(); this.list(this.cwd); } } : null,
       '-',
-      { label: n > 1 ? `삭제 (${n}개)` : '삭제', hint: 'Del', danger: true, action: () => this.remove(sel) },
+      { label: n > 1 ? L('삭제 ({n}개)', { n }) : L('삭제'), hint: 'Del', danger: true, action: () => this.remove(sel) },
     ]);
   }
 
@@ -345,15 +346,15 @@ class SftpPanel {
 
   // ── 파일 작업 ──
   async mkdir() {
-    const name = prompt('새 폴더 이름');
+    const name = prompt(L('새 폴더 이름'));
     if (!name) return;
     try { await this.call('mkdirs', { path: joinPath(this.cwd, name) }); this.list(this.cwd); }
     catch (e) { toast(e.message, 2500); }
   }
   async mkfile() {
-    const name = prompt('새 파일 이름');
+    const name = prompt(L('새 파일 이름'));
     if (!name) return;
-    if (this.entries.some((x) => x.name === name)) return toast('이미 있는 이름입니다');
+    if (this.entries.some((x) => x.name === name)) return toast(L('이미 있는 이름입니다'));
     try {
       await this.call('write', { path: joinPath(this.cwd, name), text: '' });
       await this.list(this.cwd);
@@ -362,7 +363,7 @@ class SftpPanel {
     } catch (e) { toast(e.message, 2500); }
   }
   async rename(e) {
-    const name = prompt('새 이름', e.name);
+    const name = prompt(L('새 이름'), e.name);
     if (!name || name === e.name) return;
     try { await this.call('rename', { from: joinPath(this.cwd, e.name), to: joinPath(this.cwd, name) }); this.list(this.cwd); }
     catch (err) { toast(err.message, 2500); }
@@ -370,7 +371,7 @@ class SftpPanel {
   async remove(sel) {
     const dirs = sel.filter((e) => e.dir).length;
     const names = sel.slice(0, 8).map((e) => (e.dir ? '📁 ' : '📄 ') + e.name).join('\n') + (sel.length > 8 ? '\n…' : '');
-    if (!confirm(`${sel.length}개 항목을 삭제할까요?${dirs ? `\n⚠ 폴더 ${dirs}개는 안의 내용까지 모두 삭제됩니다.` : ''}\n\n${names}`)) return;
+    if (!confirm(L('{n}개 항목을 삭제할까요?', { n: sel.length }) + (dirs ? '\n' + L('⚠ 폴더 {n}개는 안의 내용까지 모두 삭제됩니다.', { n: dirs }) : '') + '\n\n' + names)) return;
     let n = 0;
     for (const e of sel) {
       try {
@@ -378,7 +379,7 @@ class SftpPanel {
         n += r.count || 1;
       } catch (err) { toast(`${e.name}: ${err.message}`, 3000); }
     }
-    toast(`${n}개 삭제됨`);
+    toast(L('{n}개 삭제됨', { n }));
     this.list(this.cwd);
   }
 
@@ -386,7 +387,7 @@ class SftpPanel {
   addXfer(icon, name) {
     const row = document.createElement('div');
     row.className = 'sf-xfer';
-    row.innerHTML = `<span class="d"></span><span class="n"></span><progress max="1" value="0"></progress><span class="p"></span><button title="취소">✕</button>`;
+    row.innerHTML = `<span class="d"></span><span class="n"></span><progress max="1" value="0"></progress><span class="p"></span><button title="${L('취소')}">✕</button>`;
     row.querySelector('.d').textContent = icon;
     row.querySelector('.n').textContent = name;
     row.title = name;
@@ -402,7 +403,7 @@ class SftpPanel {
         x.finished = true;
         row.classList.add('ok');
         row.querySelector('progress').value = 1;
-        row.querySelector('.p').textContent = msg || '완료';
+        row.querySelector('.p').textContent = msg || L('완료');
         setTimeout(() => row.remove(), 4000);
       },
       fail(msg) {
@@ -416,7 +417,7 @@ class SftpPanel {
     row.querySelector('button').onclick = () => {
       if (x.finished) return row.remove();
       x.onCancel?.();
-      x.fail('취소됨');
+      x.fail(L('취소됨'));
     };
     return x;
   }
@@ -449,7 +450,7 @@ class SftpPanel {
   download(sel) {
     const multi = sel.length > 1 || sel.some((e) => e.dir);
     if (!multi) return this.job(() => this.downloadFile(sel[0]));
-    if (!window.showDirectoryPicker) return toast('폴더 다운로드는 크롬/엣지에서만 됩니다', 3000);
+    if (!window.showDirectoryPicker) return toast(L('폴더 다운로드는 크롬/엣지에서만 됩니다'), 3000);
     // 사용자 제스처 안에서 폴더 선택창을 먼저 띄움
     window.showDirectoryPicker({ id: 'webssh-dl', mode: 'readwrite' }).then(
       (dir) => this.job(() => this.downloadTree(sel, dir)),
@@ -475,13 +476,13 @@ class SftpPanel {
   }
 
   async downloadTree(sel, dirHandle) {
-    const label = sel.length === 1 ? sel[0].name : `${sel.length}개 항목`;
+    const label = sel.length === 1 ? sel[0].name : L('{n}개 항목', { n: sel.length });
     const x = this.addXfer('⬇', label);
     let c;
     try {
       c = await openChan(this.s.sid);
       x.onCancel = () => c.close();
-      x.note('목록 읽는 중…');
+      x.note(L('목록 읽는 중…'));
       const files = [];
       const dirs = [];
       for (const e of sel) {
@@ -508,7 +509,7 @@ class SftpPanel {
       for (const d of dirs) await getDir(d);
       let done = 0;
       for (const f of files) {
-        if (c.closed) throw new Error('취소됨');
+        if (c.closed) throw new Error(L('취소됨'));
         const i = f.rel.lastIndexOf('/');
         const dir = await getDir(i < 0 ? '' : f.rel.slice(0, i));
         const fh = await dir.getFileHandle(f.rel.slice(i + 1), { create: true });
@@ -517,7 +518,7 @@ class SftpPanel {
           done += await this.getInto(c, f.path, f.size, (d) => w.write(d), x, done, total);
         } finally { await w.close(); }
       }
-      x.ok(`${files.length}개 파일`);
+      x.ok(L('{n}개 파일', { n: files.length }));
     } catch (err) { x.fail(err.message); } finally { c?.close(); }
   }
 
@@ -527,9 +528,9 @@ class SftpPanel {
     const names = new Set(this.entries.map((e) => e.name));
     const tops = [...new Set(items.map((i) => i.rel.split('/')[0]))];
     const dup = tops.filter((n) => names.has(n));
-    if (dup.length && !confirm(`이미 있는 항목을 덮어씁니다:\n${dup.slice(0, 10).join('\n')}${dup.length > 10 ? '\n…' : ''}`)) return;
+    if (dup.length && !confirm(`${L('이미 있는 항목을 덮어씁니다:')}\n${dup.slice(0, 10).join('\n')}${dup.length > 10 ? '\n…' : ''}`)) return;
     const dir = this.cwd;
-    const label = items.length === 1 ? items[0].rel : tops.length === 1 ? `${tops[0]} (${files.length}개)` : `${files.length}개 파일`;
+    const label = items.length === 1 ? items[0].rel : tops.length === 1 ? `${tops[0]} (${L('{n}개', { n: files.length })})` : L('{n}개 파일', { n: files.length });
     const x = this.addXfer('⬆', label);
     this.job(() => this.uploadJob(items, dir, x)).then(() => { if (this.cwd === dir) this.list(dir, true); });
   }
@@ -555,10 +556,10 @@ class SftpPanel {
         await c.req({ op: 'put', path: joinPath(dir, rel) });
         for (let off = 0; off < file.size; off += CHUNK) {
           while (c.buffered > HIGH) {
-            if (c.closed) throw new Error('연결 끊김');
+            if (c.closed) throw new Error(L('연결 끊김'));
             await sleep(15);
           }
-          if (c.closed) throw new Error(x.finished ? '취소됨' : '연결 끊김');
+          if (c.closed) throw new Error(x.finished ? L('취소됨') : L('연결 끊김'));
           c.send(await file.slice(off, off + CHUNK).arrayBuffer());
           x.progress(Math.max(0, done + off + CHUNK - c.buffered), total);
         }
@@ -567,7 +568,7 @@ class SftpPanel {
         if (d.error) throw new Error(`${rel}: ${d.error}`);
         done += file.size;
       }
-      x.ok(files.length > 1 ? `${files.length}개 파일` : '완료');
+      x.ok(files.length > 1 ? L('{n}개 파일', { n: files.length }) : L('완료'));
     } catch (err) { x.fail(err.message); } finally { c?.close(); }
   }
 }
@@ -576,13 +577,13 @@ class SftpPanel {
 const editor = { panel: null, path: null, info: null, dirty: false };
 
 async function openEditor(panel, e) {
-  if (editor.dirty && $('#editorDlg').open && !confirm('저장하지 않은 변경 내용이 있습니다. 버리고 다른 파일을 열까요?')) return;
+  if (editor.dirty && $('#editorDlg').open && !confirm(L('저장하지 않은 변경 내용이 있습니다. 버리고 다른 파일을 열까요?'))) return;
   const path = joinPath(panel.cwd, e.name);
   let r;
   try { r = await panel.call('read', { path }); }
   catch (err) {
     if (err.code === 'binary' || err.code === 'toobig') {
-      if (confirm(`${err.message}\n대신 다운로드할까요?`)) panel.download([e]);
+      if (confirm(`${err.message}\n${L('대신 다운로드할까요?')}`)) panel.download([e]);
     } else toast(err.message, 3000);
     return;
   }
@@ -593,7 +594,7 @@ async function openEditor(panel, e) {
   ta.readOnly = false;
   const warn = $('#edWarn');
   warn.hidden = !r.lossy;
-  warn.textContent = r.lossy ? `⚠ ${r.enc}로 읽을 수 없는 바이트가 있어 일부 글자가 깨져 보입니다. 저장하면 그 부분이 손상됩니다.` : '';
+  warn.textContent = r.lossy ? L('⚠ {enc}로 읽을 수 없는 바이트가 있어 일부 글자가 깨져 보입니다. 저장하면 그 부분이 손상됩니다.', { enc: r.enc }) : '';
   edInfo();
   edGutter();
   const dlg = $('#editorDlg');
@@ -605,7 +606,7 @@ async function openEditor(panel, e) {
 
 function edInfo() {
   const r = editor.info;
-  $('#edInfo').textContent = `${r.enc.toUpperCase()} · ${r.crlf ? 'CRLF' : 'LF'} · ${$('#edText').value.split('\n').length}줄${editor.dirty ? ' · 수정됨' : ''}`;
+  $('#edInfo').textContent = `${r.enc.toUpperCase()} · ${r.crlf ? 'CRLF' : 'LF'} · ${L('{n}줄', { n: $('#edText').value.split('\n').length })}${editor.dirty ? ' · ' + L('수정됨') : ''}`;
 }
 function edGutter() {
   const n = $('#edText').value.split('\n').length;
@@ -620,7 +621,7 @@ function edGutter() {
 async function edSave(force) {
   const { panel, path, info } = editor;
   if (!panel) return;
-  if (info.lossy && !force && !confirm('깨진 글자가 있는 파일입니다. 그래도 저장할까요?')) return;
+  if (info.lossy && !force && !confirm(L('깨진 글자가 있는 파일입니다. 그래도 저장할까요?'))) return;
   let text = $('#edText').value;
   if (info.crlf) text = text.replace(/\r?\n/g, '\r\n');
   try {
@@ -628,12 +629,12 @@ async function edSave(force) {
     info.mtime = r.mtime;
     editor.dirty = false;
     edInfo();
-    toast('저장됨', 900);
+    toast(L('저장됨'), 900);
     if (panel.cwd === parentPath(path)) panel.list(panel.cwd, true);
   } catch (e) {
     if (e.code === 'conflict') {
-      if (confirm('편집하는 동안 서버에서 파일이 바뀌었습니다.\n내 내용으로 덮어쓸까요?')) edSave(true);
-    } else toast('저장 실패: ' + e.message, 3500);
+      if (confirm(L('편집하는 동안 서버에서 파일이 바뀌었습니다.\n내 내용으로 덮어쓸까요?'))) edSave(true);
+    } else toast(L('저장 실패: {msg}', { msg: e.message }), 3500);
   }
 }
 
@@ -652,7 +653,7 @@ async function edSave(force) {
   });
   $('#edSave').onclick = () => edSave();
   const close = () => {
-    if (editor.dirty && !confirm('저장하지 않은 변경 내용이 있습니다. 닫을까요?')) return false;
+    if (editor.dirty && !confirm(L('저장하지 않은 변경 내용이 있습니다. 닫을까요?'))) return false;
     editor.dirty = false;
     $('#editorDlg').close();
     editor.panel?.s.term.focus();
@@ -667,7 +668,7 @@ async function openChmod(panel, sel) {
   const dlg = $('#chmodDlg');
   const f = dlg.querySelector('form');
   const first = sel[0];
-  $('#cmPath').textContent = sel.length === 1 ? joinPath(panel.cwd, first.name) : `${sel.length}개 항목`;
+  $('#cmPath').textContent = sel.length === 1 ? joinPath(panel.cwd, first.name) : L('{n}개 항목', { n: sel.length });
   const boxes = $$('input[data-bit]', dlg);
   const setMode = (m) => {
     boxes.forEach((b) => { b.checked = !!(m & +b.dataset.bit); });
@@ -681,7 +682,7 @@ async function openChmod(panel, sel) {
   f.recursive.checked = false;
   $('#cmRecRow').hidden = !sel.some((e) => e.dir);
   if ((await dialogResult(dlg)) !== 'ok') return;
-  if (!/^[0-7]{3,4}$/.test(f.octal.value)) return toast('8진수 권한 형식이 올바르지 않습니다 (예: 755)');
+  if (!/^[0-7]{3,4}$/.test(f.octal.value)) return toast(L('8진수 권한 형식이 올바르지 않습니다 (예: 755)'));
   const mode = parseInt(f.octal.value, 8);
   const rec = f.recursive.checked;
   let errs = 0;
@@ -694,6 +695,6 @@ async function openChmod(panel, sel) {
       }
     } catch (err) { errs++; toast(`${e.name}: ${err.message}`, 3500); }
   }
-  if (!errs) toast('적용됨', 900);
+  if (!errs) toast(L('적용됨'), 900);
   panel.list(panel.cwd, true);
 }

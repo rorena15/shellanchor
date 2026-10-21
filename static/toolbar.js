@@ -3,31 +3,31 @@
    index.html 의 기존 버튼은 각 파일이 id 로 동작을 연결해 두었으므로 요소를 옮겨 배치만 바꾸고,
    상단 바에 새로 올릴 수 있는 동작(ic/text/run 이 있는 항목)은 여기서 버튼을 만들어 붙인다. */
 
-const withTab = (fn) => () => { const s = focused(); if (s) fn(s); else toast('열린 탭이 없습니다'); };
+const withTab = (fn) => () => { const s = focused(); if (s) fn(s); else toast(L('열린 탭이 없습니다')); };
 
 // 상단 바에 올릴 수 있는 항목 (이 순서가 기본 순서)
 const TB_ITEMS = [
-  { id: 'tbSession', label: '새 세션' },
-  { id: 'quick', label: '빠른 접속 입력칸', ic: '⌨' },
-  { id: 'tbSep1', label: '구분선', ic: '│', kind: 'sep' },
-  { id: 'tbSplit', label: '화면 분할' },
-  { id: 'tbTunnel', label: 'SSH 터널' },
-  { id: 'tbLocal', label: '로컬 터미널' },
-  { id: 'tbLogs', label: '로그 폴더 열기' },
-  { id: 'tbSettings', label: '설정' },
-  { id: 'tbSftp', label: 'SFTP 패널', ic: '⇅', text: 'SFTP', title: 'SFTP 패널 (Ctrl+Alt+F)', run: () => setSide('sftp') },
-  { id: 'tbSidebar', label: '사이드바 접기/펴기', ic: '◧', text: '사이드바', title: '사이드바 접기/펴기', run: () => toggleSidebar() },
-  { id: 'tbDup', label: '현재 탭 복제', ic: '⧉', text: '복제', title: '현재 탭 복제', run: withTab((s) => openTab(s.spec)) },
-  { id: 'tbReconnect', label: '현재 탭 재접속', ic: '↻', text: '재접속', title: '현재 탭 재접속', run: withTab((s) => reconnectNow(s)) },
-  { id: 'tbCloseTab', label: '현재 탭 닫기', ic: '✕', text: '탭 닫기', title: '현재 탭 닫기 (Ctrl+Alt+W)', run: withTab((s) => closeTab(s)) },
-  { id: 'tbNewFolder', label: '새 세션 폴더', ic: '📁', text: '새 폴더', title: '새 세션 폴더', run: () => $('#treeNewFolder').click() },
-  { id: 'tbImport', label: 'MobaXterm 세션 가져오기', ic: '⤓', text: '가져오기', title: 'MobaXterm 세션 가져오기', run: () => $('#importFile').click() },
-  { id: 'tbSep2', label: '구분선', ic: '│', kind: 'sep' },
-  { id: 'tbSpacer', label: '빈 공간 — 이 뒤의 항목은 오른쪽 끝에 붙음', ic: '↔', kind: 'spacer' },
-  { id: 'themeBtn', label: '라이트/다크 전환' },
-  { id: 'fontDown', label: '글자 작게' },
-  { id: 'fontUp', label: '글자 크게' },
-  { id: 'fullBtn', label: '전체화면' },
+  { id: 'tbSession', label: L('새 세션') },
+  { id: 'quick', label: L('빠른 접속 입력칸'), ic: '⌨' },
+  { id: 'tbSep1', label: L('구분선'), ic: '│', kind: 'sep' },
+  { id: 'tbSplit', label: L('화면 분할') },
+  { id: 'tbTunnel', label: L('SSH 터널') },
+  { id: 'tbLocal', label: L('로컬 터미널') },
+  { id: 'tbLogs', label: L('로그 폴더 열기') },
+  { id: 'tbSettings', label: L('설정') },
+  { id: 'tbSftp', label: L('SFTP 패널'), ic: '⇅', text: 'SFTP', title: L('SFTP 패널 (Ctrl+Alt+F)'), run: () => setSide('sftp') },
+  { id: 'tbSidebar', label: L('사이드바 접기/펴기'), ic: '◧', text: L('사이드바'), title: L('사이드바 접기/펴기'), run: () => toggleSidebar() },
+  { id: 'tbDup', label: L('현재 탭 복제'), ic: '⧉', text: L('복제'), title: L('현재 탭 복제'), run: withTab((s) => openTab(s.spec)) },
+  { id: 'tbReconnect', label: L('현재 탭 재접속'), ic: '↻', text: L('재접속'), title: L('현재 탭 재접속'), run: withTab((s) => reconnectNow(s)) },
+  { id: 'tbCloseTab', label: L('현재 탭 닫기'), ic: '✕', text: L('탭 닫기'), title: L('현재 탭 닫기 (Ctrl+Alt+W)'), run: withTab((s) => closeTab(s)) },
+  { id: 'tbNewFolder', label: L('새 세션 폴더'), ic: '📁', text: L('새 폴더'), title: L('새 세션 폴더'), run: () => $('#treeNewFolder').click() },
+  { id: 'tbImport', label: L('MobaXterm 세션 가져오기'), ic: '⤓', text: L('가져오기'), title: L('MobaXterm 세션 가져오기'), run: () => $('#importFile').click() },
+  { id: 'tbSep2', label: L('구분선'), ic: '│', kind: 'sep' },
+  { id: 'tbSpacer', label: L('빈 공간 — 이 뒤의 항목은 오른쪽 끝에 붙음'), ic: '↔', kind: 'spacer' },
+  { id: 'themeBtn', label: L('라이트/다크 전환') },
+  { id: 'fontDown', label: L('글자 작게') },
+  { id: 'fontUp', label: L('글자 크게') },
+  { id: 'fullBtn', label: L('전체화면') },
 ];
 const TB_DEFAULT = {   // 처음 모습은 예전 상단 바와 같게
   order: TB_ITEMS.map((i) => i.id),
@@ -137,7 +137,7 @@ async function editToolbar() {
   const r = await dialogResult($('#toolbarDlg'));
   if (r === 'ok') {
     tbSave(tbDraft);
-    toast('상단 바를 저장했습니다');
+    toast(L('상단 바를 저장했습니다'));
   } else {
     renderToolbar(saved);   // 취소/Esc: 미리 보기 되돌림
   }
@@ -196,10 +196,10 @@ async function editToolbar() {
     const btn = e.target.closest('#toolbar > [id]');
     const it = btn && tbItem(btn.id);
     showMenu(e.clientX, e.clientY, [
-      it && !it.kind ? { label: `'${it.label}' 숨기기`, action: () => { cfg.hidden.push(btn.id); tbSave(cfg); } } : null,
-      { label: (cfg.iconOnly ? '✓ ' : '　') + '아이콘만 표시', action: () => { cfg.iconOnly = !cfg.iconOnly; tbSave(cfg); } },
+      it && !it.kind ? { label: L("'{name}' 숨기기", { name: it.label }), action: () => { cfg.hidden.push(btn.id); tbSave(cfg); } } : null,
+      { label: (cfg.iconOnly ? '✓ ' : '　') + L('아이콘만 표시'), action: () => { cfg.iconOnly = !cfg.iconOnly; tbSave(cfg); } },
       '-',
-      { label: '상단 바 편집…', action: editToolbar },
+      { label: L('상단 바 편집…'), action: editToolbar },
     ]);
   });
 

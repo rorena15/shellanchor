@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import threading
 
+from i18n import L
+
 from websockets.exceptions import ConnectionClosed
 
 import common
@@ -74,7 +76,7 @@ async def local_handler(ws):
             PtyProcess.spawn, path, cwd=os.path.expanduser("~"),
             dimensions=(int(p.get("rows") or 24), int(p.get("cols") or 80)))
     except Exception as e:
-        await send_json(type="error", message=f"실행 실패: {e}")
+        await send_json(type="error", message=L("실행 실패: {e}", e=e))
         await ws.close()
         return
 

@@ -11,6 +11,7 @@ const WS_BASE = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.h
 function wsUrl(path, q = {}) {
   const p = new URLSearchParams(q);
   if (TOKEN) p.set('t', TOKEN);
+  p.set('lang', LANG);   // 서버가 보내는 메시지도 화면 언어로
   const qs = p.toString();
   return WS_BASE + path + (qs ? '?' + qs : '');
 }
@@ -43,7 +44,7 @@ function fmtTime(t) {
 }
 function fmtUptime(s) {
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
-  return d ? `${d}일 ${h}시간` : h ? `${h}시간 ${m}분` : `${m}분`;
+  return d ? L('{d}일 {h}시간', { d, h }) : h ? L('{h}시간 {m}분', { h, m }) : L('{m}분', { m });
 }
 
 // 대상 문자열: user@host[:port]
@@ -86,13 +87,13 @@ const api = {
       (this.handlers[m.type] || []).forEach((f) => f(m));
     };
     ws.onclose = () => {
-      for (const { rej } of this.pending.values()) rej(new Error('서버 연결이 끊어졌습니다'));
+      for (const { rej } of this.pending.values()) rej(new Error(L('서버 연결이 끊어졌습니다')));
       this.pending.clear();
       if (this.stopped) {
-        $('#sbText').textContent = '서버를 종료했습니다. 이 창을 닫으세요.';
+        $('#sbText').textContent = L('서버를 종료했습니다. 이 창을 닫으세요.');
         return;
       }
-      $('#sbText').textContent = '⚠ 중계 서버와 연결이 끊어졌습니다 — 서버를 다시 실행하세요 (자동 재연결 시도 중)';
+      $('#sbText').textContent = L('⚠ 중계 서버와 연결이 끊어졌습니다 — 서버를 다시 실행하세요 (자동 재연결 시도 중)');
       setTimeout(() => this.connect(), 3000);
     };
   },
@@ -108,7 +109,7 @@ const api = {
 };
 
 function saveDB() {
-  return api.call('saveData', { data: DB }).catch((e) => toast('저장 실패: ' + e.message, 3000));
+  return api.call('saveData', { data: DB }).catch((e) => toast(L('저장 실패: {msg}', { msg: e.message }), 3000));
 }
 const findSession = (id) => DB.sessions.find((s) => s.id === id);
 
@@ -124,11 +125,11 @@ async function ensureSecrets(spec, ask = {}) {
   const fields = [];
   for (const [which, c] of hops) {
     const cache = SECRETS.get(credKey(c)) || {};
-    const label = which === 'jump' ? `점프 호스트 ${targetStr(c)}` : targetStr(c);
+    const label = which === 'jump' ? L('점프 호스트 {host}', { host: targetStr(c) }) : targetStr(c);
     if ((c.auth || 'password') === 'password' && (cache.password == null || ask.password === which)) {
-      fields.push({ which, key: 'password', label: `${label} 비밀번호` });
+      fields.push({ which, key: 'password', label: L('{label} 비밀번호', { label }) });
     }
-    if (ask.passphrase === which) fields.push({ which, key: 'passphrase', label: `${label} 개인키 암호` });
+    if (ask.passphrase === which) fields.push({ which, key: 'passphrase', label: L('{label} 개인키 암호', { label }) });
   }
   if (fields.length) {
     const vals = await promptSecrets(fields, spec.name || targetStr(spec));

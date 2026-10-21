@@ -25,7 +25,7 @@ python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-Or just double-click **`실행(콘솔).bat`** ("Run (console)") — it creates `.venv`, installs the packages if needed, and starts the server.
+Or just double-click **`run.bat`** — it creates `.venv`, installs the packages if needed, and starts the server.
 
 ## Run
 
@@ -127,7 +127,11 @@ Keep only the buttons you need. Click **⋯** at the right end, or **right-click
 | Full screen (Ctrl+W etc. go to terminal)   | ⛶                        |
 | Collapse/expand sidebar                    | double-click the divider |
 
-> The UI is currently in Korean. Contributions for English translation are welcome.
+### Language
+
+The UI is available in **English and Korean**. By default it follows your browser language;
+change it in ⚙ Settings → Language. Server messages (connection errors, SFTP errors, …) follow the same setting.
+Translations live in `static/i18n-en.js` (browser) and `i18n.py` (server) — contributions for more languages are welcome.
 
 ## Security
 
@@ -150,6 +154,7 @@ Keep only the buttons you need. Click **⋯** at the right end, or **right-click
 | `localterm.py`        | Local terminal (ConPTY)                                                                     |
 | `api.py`              | Session tree and settings storage, tunnel control, RDP launch                               |
 | `tls.py`, `common.py` | Certificates, shared settings                                                               |
+| `i18n.py`             | Server message translations (Korean → English)                                              |
 | `static/`             | Front end (core, app, tree, sftp, tunnels, highlight, toolbar .js)                                 |
 | `data/`               | `sessions.json` (sessions, folders, tunnels), `settings.json`, `known_hosts`, `rdp/` — back up this folder |
 | `logs/`               | Session logs (location configurable in Settings)                                            |

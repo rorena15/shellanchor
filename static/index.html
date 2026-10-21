@@ -230,7 +230,7 @@
 <dialog id="tunnelDlg" class="dlg narrow">
   <form method="dialog" autocomplete="off">
     <h3 id="tdTitle">새 터널</h3>
-    <label>이름<input name="name" placeholder="예: S400 DB"></label>
+    <label>이름<input name="name" placeholder="예: 운영 DB"></label>
     <label>종류
       <select name="type">
         <option value="local">로컬 포워딩 (내 포트 → 원격 서비스)</option>
@@ -259,9 +259,10 @@
   <form method="dialog" autocomplete="off">
     <h3>설정</h3>
     <h4 class="first">화면</h4>
-    <div class="grid2">
+    <div class="grid3">
       <label>화면 테마<select name="uiTheme"></select></label>
       <label>터미널 색<select name="termScheme"></select></label>
+      <label>언어 / Language<select name="lang"></select></label>
     </div>
     <div id="schemePreview" class="scheme-preview mono"></div>
     <h4>동작</h4>
@@ -330,6 +331,8 @@
 <script src="vendor/xterm.js"></script>
 <script src="vendor/addon-fit.js"></script>
 <script src="vendor/addon-web-links.js"></script>
+<script src="i18n-en.js"></script>
+<script src="i18n.js"></script>
 <script src="core.js"></script>
 <script src="themes.js"></script>
 <script src="highlight.js"></script>

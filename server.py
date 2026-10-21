@@ -31,6 +31,8 @@ from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from i18n import L, set_lang
+
 APP_NAME = "ShellAnchor"
 HIDDEN = sys.stdout is None          # pythonw(창 없음)로 실행됨
 
@@ -48,7 +50,7 @@ if HIDDEN:   # 콘솔이 없으면 출력을 로그 파일로 (1MB 넘으면 새
     if _log.exists() and _log.stat().st_size > 1 << 20:
         _log.unlink()
     sys.stdout = sys.stderr = open(_log, "a", encoding="utf-8", buffering=1)
-    print(f"\n----- {time.strftime('%Y-%m-%d %H:%M:%S')} 시작 -----")
+    print(f"\n----- {time.strftime('%Y-%m-%d %H:%M:%S')} {L('시작')} -----")
 
 try:
     from websockets.asyncio.server import serve
@@ -64,7 +66,7 @@ try:
     from tunnels import manager
 except ImportError as e:
     if HIDDEN:
-        msgbox(f"필요한 패키지가 없습니다: {e.name}\n\n'실행(콘솔).bat'을 한 번 실행하면 자동으로 설치됩니다.")
+        msgbox(L("필요한 패키지가 없습니다: {name}\n\n'run.bat'을 한 번 실행하면 자동으로 설치됩니다.", name=e.name))
     raise
 
 TOKEN = None  # 외부 바인딩 시 설정
@@ -120,7 +122,7 @@ def process_request(connection, request):
                      [("Content-Disposition", 'attachment; filename="webssh-ca.crt"')])
 
     if not _token_ok(url.query) and path in ("/", "/index.html"):
-        return _resp(403, "접속 토큰이 필요합니다. 서버 콘솔에 출력된 URL로 접속하세요.".encode())
+        return _resp(403, L("접속 토큰이 필요합니다. 서버 콘솔에 출력된 URL로 접속하세요.").encode())
 
     if path == "/":
         path = "/index.html"
@@ -135,6 +137,7 @@ def process_request(connection, request):
 
 async def handler(ws):
     url = urlsplit(ws.request.path)
+    set_lang(parse_qs(url.query).get("lang", [""])[0])   # 이 연결에서 보내는 메시지의 언어
     if url.path == "/sftp":
         sess = common.SESSIONS.get(parse_qs(url.query).get("sid", [""])[0])
         if not sess:
@@ -171,15 +174,15 @@ def _open_browser(url):
 def _setup_tls(want_trust):
     new_ca = tls.ensure_certs()
     if new_ca:
-        print(f"로컬 CA 생성: {tls.CA_CRT}")
+        print(L("로컬 CA 생성: {path}", path=tls.CA_CRT))
     trusted = tls.ca_trusted()
     if trusted is False and want_trust:
-        print("인증서 신뢰 등록 중… Windows 보안 경고 창에서 '예'를 누르세요.")
+        print(L("인증서 신뢰 등록 중… Windows 보안 경고 창에서 '예'를 누르세요."))
         trusted = tls.trust_ca()
-        print("  → 등록 완료 (크롬이 이미 켜져 있었다면 크롬을 다시 시작하세요)" if trusted
-              else "  → 등록 안 됨. 브라우저에서 '고급 → 계속'으로 접속하거나 다시 --trust로 실행하세요.")
+        print(L("  → 등록 완료 (크롬이 이미 켜져 있었다면 크롬을 다시 시작하세요)") if trusted
+              else L("  → 등록 안 됨. 브라우저에서 '고급 → 계속'으로 접속하거나 다시 --trust로 실행하세요."))
     elif trusted is False:
-        print("※ 로컬 CA가 아직 신뢰되지 않음 → 브라우저 경고가 뜹니다. `python server.py --trust` 1회 실행 권장.")
+        print(L("※ 로컬 CA가 아직 신뢰되지 않음 → 브라우저 경고가 뜹니다. `python server.py --trust` 1회 실행 권장."))
 
 
 def _who_has_port(port, scheme):
@@ -205,20 +208,20 @@ async def _idle_exit(stop, grace=60):
         busy = api._clients or common.SESSIONS or any(t.state != "off" for t in manager.tunnels.values())
         idle = 0 if busy else idle + 5
         if idle >= grace:
-            print("브라우저 창이 닫혀 있어 자동 종료합니다.")
+            print(L("브라우저 창이 닫혀 있어 자동 종료합니다."))
             stop.set()
 
 
 async def main():
     global TOKEN
     ap = argparse.ArgumentParser(description=APP_NAME)
-    ap.add_argument("--host", default="127.0.0.1", help="바인딩 주소 (기본 127.0.0.1)")
+    ap.add_argument("--host", default="127.0.0.1", help=L("바인딩 주소 (기본 127.0.0.1)"))
     ap.add_argument("--port", type=int, default=8022)
-    ap.add_argument("--token", help="접속 토큰 (외부 바인딩 시 미지정이면 자동 생성)")
-    ap.add_argument("--open", action="store_true", help="크롬 앱 창으로 열기")
-    ap.add_argument("--trust", action="store_true", help="로컬 CA를 현재 사용자 신뢰 루트에 등록 (최초 1회)")
-    ap.add_argument("--no-tls", action="store_true", help="HTTPS 끄기 (평문 HTTP)")
-    ap.add_argument("--auto-exit", action="store_true", help="브라우저 창을 모두 닫고 1분 지나면 종료 (터널 실행 중이면 유지)")
+    ap.add_argument("--token", help=L("접속 토큰 (외부 바인딩 시 미지정이면 자동 생성)"))
+    ap.add_argument("--open", action="store_true", help=L("크롬 앱 창으로 열기"))
+    ap.add_argument("--trust", action="store_true", help=L("로컬 CA를 현재 사용자 신뢰 루트에 등록 (최초 1회)"))
+    ap.add_argument("--no-tls", action="store_true", help=L("HTTPS 끄기 (평문 HTTP)"))
+    ap.add_argument("--auto-exit", action="store_true", help=L("브라우저 창을 모두 닫고 1분 지나면 종료 (터널 실행 중이면 유지)"))
     a = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")  # cp949 콘솔에서 출력 오류 방지
@@ -227,12 +230,12 @@ async def main():
     scheme = "http" if a.no_tls else "https"
     who = _who_has_port(a.port, scheme)
     if who == "ours":
-        print("이미 실행 중 → 창만 엽니다.")
+        print(L("이미 실행 중 → 창만 엽니다."))
         if a.open:
             _open_browser(f"{scheme}://127.0.0.1:{a.port}/")
         return
     if who == "other":
-        msg = f"포트 {a.port}를 다른 프로그램이 쓰고 있습니다. --port 로 다른 포트를 지정하세요."
+        msg = L("포트 {port}를 다른 프로그램이 쓰고 있습니다. --port 로 다른 포트를 지정하세요.", port=a.port)
         print(msg)
         if HIDDEN:
             msgbox(msg)
@@ -264,11 +267,11 @@ async def main():
         scheme = "http" if a.no_tls else "https"
         shown = "127.0.0.1" if a.host in ("0.0.0.0", "::") else a.host
         url = f"{scheme}://{shown}:{a.port}/" + (f"?t={TOKEN}" if TOKEN else "")
-        print(f"{APP_NAME} 실행 중 → {url}")
+        print(L("{app} 실행 중 → {url}", app=APP_NAME, url=url))
         if not loopback:
-            print("  (다른 PC에서는 이 PC의 IP로 접속, 인증서 경고 없애려면 /ca.crt 받아서 신뢰 등록)")
-            print("  ※ 외부 바인딩이라 로컬 터미널·RDP 실행·파일 선택 기능은 꺼져 있습니다.")
-        print("종료: 화면의 ⚙설정 → 서버 종료" + ("" if HIDDEN else " 또는 Ctrl+C"))
+            print(L("  (다른 PC에서는 이 PC의 IP로 접속, 인증서 경고 없애려면 /ca.crt 받아서 신뢰 등록)"))
+            print(L("  ※ 외부 바인딩이라 로컬 터미널·RDP 실행·파일 선택 기능은 꺼져 있습니다."))
+        print(L("종료: 화면의 ⚙설정 → 서버 종료") + ("" if HIDDEN else L(" 또는 Ctrl+C")))
         if a.open:
             _open_browser(url)
         stop = asyncio.Event()
@@ -279,7 +282,7 @@ async def main():
             await stop.wait()
         finally:
             manager.stop_all()
-            print("종료됨")
+            print(L("종료됨"))
 
 
 if __name__ == "__main__":
@@ -291,5 +294,5 @@ if __name__ == "__main__":
         if HIDDEN:
             import traceback
             traceback.print_exc()
-            msgbox(f"실행 중 오류로 종료됐습니다:\n{e}\n\n자세한 내용: data\\server.log")
+            msgbox(L("실행 중 오류로 종료됐습니다:\n{e}\n\n자세한 내용: data\\server.log", e=e))
         raise

@@ -283,7 +283,7 @@ dialog label { display: flex; flex-direction: column; gap: 3px; color: var(--dim
 dialog label > input, dialog label > select, dialog label > .row { color: var(--fg); font-size: 13px; }
 dialog code { display: block; padding: 9px; background: var(--bg); border-radius: 6px; word-break: break-all; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }   /* minmax(0,…): select 최소 폭 때문에 넘치지 않게 */
 .span2 { grid-column: span 2; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > input { flex: 1; }
