@@ -1,0 +1,6 @@
+# 저장소에는 LF 로 저장, Windows 배치 파일만 CRLF (LF 면 goto/라벨이 오동작할 수 있음)
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ico binary
+*.png binary

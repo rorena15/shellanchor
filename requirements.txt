@@ -1,0 +1,11 @@
+# ShellAnchor - runtime dependencies (Python 3.11+)
+# api/common/localterm/server/sftp/sshconn/term/tls/tunnels are local modules;
+# everything else is from the standard library.
+
+paramiko
+cryptography
+# websockets.asyncio.server API (used by server.py) was added in 13.0
+websockets>=13
+
+# localterm.py: Windows ConPTY local terminal (`import winpty`). Windows only.
+pywinpty ; platform_system == "Windows"
