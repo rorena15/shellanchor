@@ -13,6 +13,8 @@ Browser (xterm.js) ──WSS── server.py ──SSH── [jump host ──] 
                               └─ RDP → launches Windows Remote Desktop (mstsc)
 ```
 
+![ShellAnchor — terminal with SFTP panel and monitoring bar](docs/screenshots/en-main.png)
+
 > **Requirements**: Windows 10/11, Python 3.11+ (tested on 3.12), Chrome or Edge.
 > The local terminal, RDP launcher and automatic certificate trust are Windows-only. Other operating systems are untested.
 
@@ -78,6 +80,8 @@ Keep only the buttons you need. Click **⋯** at the right end, or **right-click
 - **Icons only** mode for a compact toolbar (button names appear as tooltips)
 - Right-click a button to hide just that one. The layout is saved per browser
 
+![Edit toolbar](docs/screenshots/en-toolbar.png)
+
 ### Sessions
 
 - **Session folder tree**: nested folders, drag & drop, search, double-click to connect, context menu (edit / duplicate / delete)
@@ -132,6 +136,8 @@ Keep only the buttons you need. Click **⋯** at the right end, or **right-click
 The UI is available in **English and Korean**. By default it follows your browser language;
 change it in ⚙ Settings → Language. Server messages (connection errors, SFTP errors, …) follow the same setting.
 Translations live in `static/i18n-en.js` (browser) and `i18n.py` (server) — contributions for more languages are welcome.
+
+![Settings in dark theme](docs/screenshots/en-settings.png)
 
 ## Security
 

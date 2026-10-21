@@ -13,6 +13,8 @@
                             └─ RDP → Windows 원격 데스크톱(mstsc) 실행
 ```
 
+![ShellAnchor — SFTP 패널과 모니터링 바가 있는 터미널 화면](docs/screenshots/ko-main.png)
+
 > **지원 환경**: Windows 10/11 + Python 3.11 이상(3.12에서 테스트) + Chrome/Edge.
 > 로컬 터미널·RDP·인증서 자동 신뢰 등록은 Windows 전용입니다. 다른 OS에서는 시험하지 않았습니다.
 
@@ -77,6 +79,8 @@ python server.py --no-tls         :: HTTPS 끄기 (평문 HTTP, 권장하지 않
 - **아이콘만 표시**로 상단 바를 좁게 (버튼 이름은 마우스를 올리면 보임)
 - 버튼 우클릭 → 그 버튼만 바로 숨기기. 설정은 브라우저별로 저장
 
+![상단 바 편집](docs/screenshots/ko-toolbar.png)
+
 ### 세션 관리
 
 - **세션 폴더 트리**: 폴더/하위 폴더, 끌어다 놓아 이동, 검색, 더블클릭 접속, 우클릭 메뉴(편집·복제·삭제)
@@ -119,6 +123,8 @@ python server.py --no-tls         :: HTTPS 끄기 (평문 HTTP, 권장하지 않
 화면은 **한국어와 영어**를 지원합니다. 기본은 브라우저 언어를 따르고, ⚙설정 → 언어에서 바꿀 수 있습니다.
 서버가 보내는 메시지(접속 오류, SFTP 오류 등)도 같은 설정을 따릅니다.
 번역은 `static/i18n-en.js`(화면)와 `i18n.py`(서버)에 있습니다.
+
+![다크 테마의 설정 화면](docs/screenshots/ko-settings.png)
 
 ### 단축키
 
