@@ -12,18 +12,20 @@
 <header id="toolbar">
   <button id="tbSession" class="tb" title="새 세션 (Ctrl+Alt+N)"><span class="ic">＋</span>세션</button>
   <input id="quick" placeholder="빠른 접속: user@host[:port]  ↵" spellcheck="false" autocomplete="off">
-  <div class="tb-group">
-    <button id="tbSplit" class="tb" title="화면 분할"><span class="ic">▦</span>분할</button>
-    <button id="tbTunnel" class="tb" title="SSH 터널"><span class="ic">⇄</span>터널</button>
-    <button id="tbLocal" class="tb" title="로컬 터미널"><span class="ic">▣</span>로컬</button>
-    <button id="tbLogs" class="tb" title="세션 로그 폴더 열기"><span class="ic">≡</span>로그</button>
-    <button id="tbSettings" class="tb" title="설정"><span class="ic">⚙</span>설정</button>
-  </div>
-  <div class="spacer"></div>
+  <div id="tbSep1" class="tb-sep"></div>
+  <button id="tbSplit" class="tb" title="화면 분할"><span class="ic">▦</span>분할</button>
+  <button id="tbTunnel" class="tb" title="SSH 터널"><span class="ic">⇄</span>터널</button>
+  <button id="tbLocal" class="tb" title="로컬 터미널"><span class="ic">▣</span>로컬</button>
+  <button id="tbLogs" class="tb" title="세션 로그 폴더 열기"><span class="ic">≡</span>로그</button>
+  <button id="tbSettings" class="tb" title="설정"><span class="ic">⚙</span>설정</button>
+  <div id="tbSep2" class="tb-sep"></div>
+  <div id="tbSpacer" class="spacer"></div>
   <button id="themeBtn" class="tb small" title="라이트/다크 전환 (자세한 설정은 ⚙설정)">☀</button>
   <button id="fontDown" class="tb small" title="글자 작게">A−</button>
   <button id="fontUp" class="tb small" title="글자 크게">A＋</button>
   <button id="fullBtn" class="tb small" title="전체화면 — 이때는 Ctrl+W 등도 터미널로 전달됨">⛶</button>
+  <!-- 배치는 toolbar.js 가 사용자 설정대로 바꾼다. ⋯ 는 항상 맨 끝 -->
+  <button id="tbMore" class="tb small" title="상단 바 편집 (상단 바 우클릭으로도 열 수 있음)">⋯</button>
 </header>
 
 <div id="main">
@@ -194,6 +196,22 @@
   </form>
 </dialog>
 
+<!-- 상단 바 편집 -->
+<dialog id="toolbarDlg" class="dlg narrow">
+  <form method="dialog">
+    <h3>상단 바 편집</h3>
+    <p class="hint tb-help">체크한 항목만 상단 바에 보입니다. 끌어서(또는 Alt+↑↓) 순서를 바꾸세요.
+      <b>빈 공간</b> 뒤의 항목은 오른쪽 끝에 붙습니다.</p>
+    <ul id="tbList" class="tb-list"></ul>
+    <label class="check"><input type="checkbox" id="tbIconOnly"> 아이콘만 표시 (글자 숨기기)</label>
+    <div class="row end">
+      <button type="button" id="tbReset" class="tb-reset">기본값으로</button>
+      <button value="cancel" formnovalidate>취소</button>
+      <button value="ok" class="primary">저장</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- 호스트 키 -->
 <dialog id="hostkeyDlg" class="dlg narrow">
   <form method="dialog">
@@ -319,5 +337,6 @@
 <script src="sftp.js"></script>
 <script src="tree.js"></script>
 <script src="tunnels.js"></script>
+<script src="toolbar.js"></script>
 </body>
 </html>

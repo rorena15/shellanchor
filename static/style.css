@@ -83,7 +83,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* ── 툴바 ── */
 #toolbar {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 2px;
   padding: 5px 8px; background: var(--panel); border-bottom: 1px solid var(--line);
 }
 .tb { display: flex; align-items: center; gap: 5px; background: transparent; border-color: transparent; padding: 4px 9px; }
@@ -91,9 +91,28 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .tb .ic { font-size: 15px; color: var(--accent); }
 .tb.small { padding: 4px 7px; }
 .tb.on { color: var(--accent); border-color: var(--accent); }
-.tb-group { display: flex; gap: 2px; padding-left: 6px; border-left: 1px solid var(--line); }
-#quick { width: 260px; font-family: D2Coding, Consolas, monospace; }
+.tb-sep { width: 1px; align-self: stretch; margin: 3px 6px; background: var(--line); }
+#quick { width: 260px; margin: 0 4px; font-family: D2Coding, Consolas, monospace; }
 #toolbar .spacer { flex: 1; }
+/* 아이콘만 표시: 글자 노드는 font-size 0 으로 숨기고 아이콘만 원래 크기로 (버튼 이름은 title 툴팁) */
+#toolbar.icon-only .tb:not(.small) { font-size: 0; gap: 0; padding: 4px 7px; }
+#toolbar.icon-only .tb .ic { font-size: 15px; }
+#tbMore { color: var(--dim); font-weight: bold; letter-spacing: 1px; }
+
+/* 상단 바 편집 대화상자 */
+.tb-help { margin: -4px 0 0; word-break: keep-all; }
+.tb-list {
+  list-style: none; margin: 0; padding: 4px; max-height: 52vh; overflow: auto;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+}
+.tb-list li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; cursor: grab; user-select: none; }
+.tb-list li:hover, .tb-list li:focus-visible { background: var(--soft); outline: none; }
+.tb-list li.dragging { opacity: .4; }
+.tb-list li.k-sep, .tb-list li.k-spacer { color: var(--dim); }
+.tb-list li.off .name { color: var(--dim); }
+.tb-list .grip { color: var(--gutter); cursor: grab; }
+.tb-list .ic { width: 22px; text-align: center; color: var(--accent); }
+.tb-reset { margin-right: auto; }
 
 /* ── 본문: 사이드바 | 오른쪽 ── */
 #main { flex: 1; display: flex; min-height: 0; }
@@ -324,8 +343,8 @@ dialog.editor:not([open]) { display: none; }
 #toast.show { opacity: 1; }
 
 @media (max-width: 900px) {
-  .tb-group .tb { font-size: 0; gap: 0; }
-  .tb-group .tb .ic { font-size: 15px; }
+  #toolbar .tb:not(.small):not(#tbSession) { font-size: 0; gap: 0; }
+  #toolbar .tb .ic { font-size: 15px; }
   #quick { width: 160px; }
 }
 

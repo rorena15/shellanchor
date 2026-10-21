@@ -57,7 +57,7 @@ python server.py --no-tls         :: plain HTTP (not recommended)
 ## Layout
 
 ```
-┌ ＋Session ▦Split ⇄Tunnel ▣Local ≡Logs ⚙Settings ──────────────── ☀ A− A＋ ⛶ ┐
+┌ ＋Session ▦Split ⇄Tunnel ▣Local ≡Logs ⚙Settings ────────────── ☀ A− A＋ ⛶ ⋯ ┐
 ├ [Sessions|SFTP|Tunnels] ┬ tab1 · tab2 · tab3 ───────────────────────────────┤
 │ 📁 Ops                   │                                                  │
 │   📁 Web                 │   terminal (split: single / 2 cols / 2 rows / 4)  │
@@ -67,6 +67,16 @@ python server.py --no-tls         :: plain HTTP (not recommended)
 ```
 
 ## Features
+
+### Customizable toolbar
+
+Keep only the buttons you need. Click **⋯** at the right end, or **right-click the toolbar → Edit toolbar…**
+
+- Check items to show or hide them, drag (or Alt+↑↓) to reorder. Changes preview live; Cancel restores the previous layout
+- Items after the **spacer** are aligned to the right. **Separators** can go anywhere
+- Extra actions you can add besides the defaults: SFTP panel, collapse sidebar, duplicate / reconnect / close current tab, new session folder, import MobaXterm sessions
+- **Icons only** mode for a compact toolbar (button names appear as tooltips)
+- Right-click a button to hide just that one. The layout is saved per browser
 
 ### Sessions
 
@@ -140,7 +150,7 @@ python server.py --no-tls         :: plain HTTP (not recommended)
 | `localterm.py`        | Local terminal (ConPTY)                                                                     |
 | `api.py`              | Session tree and settings storage, tunnel control, RDP launch                               |
 | `tls.py`, `common.py` | Certificates, shared settings                                                               |
-| `static/`             | Front end (core, app, tree, sftp, tunnels, highlight .js)                                   |
+| `static/`             | Front end (core, app, tree, sftp, tunnels, highlight, toolbar .js)                                 |
 | `data/`               | `sessions.json` (sessions, folders, tunnels), `settings.json`, `known_hosts`, `rdp/` — back up this folder |
 | `logs/`               | Session logs (location configurable in Settings)                                            |
 
